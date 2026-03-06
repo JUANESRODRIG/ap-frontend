@@ -8,6 +8,7 @@ import {
     Upload,
     Loader2,
 } from 'lucide-react';
+import { uploadInvoices } from '../api/invoices';
 
 interface UploadedFile {
     id: string;
@@ -19,6 +20,8 @@ interface UploadedFile {
 const UploadInvoice = () => {
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [dragging, setDragging] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFiles = useCallback((newFiles: FileList | null) => {
@@ -80,6 +83,29 @@ const UploadInvoice = () => {
         if (bytes < 1024) return `${bytes} B`;
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const handleSubmit = async () => {
+        if (!allComplete || files.length === 0 || isProcessing) return;
+
+        try {
+            setIsProcessing(true);
+            setError(null);
+
+            const rawFiles = files.map((f) => f.file);
+            const result = await uploadInvoices(rawFiles);
+
+            // TODO: integrate the result into your UI (e.g. navigate to a
+            // results page or show extracted data). For now, we just log it.
+            // eslint-disable-next-line no-console
+            console.log('Invoice extraction result:', result);
+        } catch (err) {
+            const message =
+                err instanceof Error ? err.message : 'Failed to process invoices';
+            setError(message);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const allComplete = files.length > 0 && files.every((f) => f.status === 'complete');
@@ -219,19 +245,31 @@ const UploadInvoice = () => {
                 )}
             </AnimatePresence>
 
+            {/* Error message */}
+            {error && (
+                <div className="upload-error-message">
+                    {error}
+                </div>
+            )}
+
             {/* Submit button */}
             {files.length > 0 && (
                 <motion.button
                     className="upload-submit-btn"
-                    disabled={!allComplete}
+                    disabled={!allComplete || isProcessing}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    whileHover={allComplete ? { scale: 1.02 } : {}}
-                    whileTap={allComplete ? { scale: 0.98 } : {}}
+                    whileHover={allComplete && !isProcessing ? { scale: 1.02 } : {}}
+                    whileTap={allComplete && !isProcessing ? { scale: 0.98 } : {}}
                     id="submit-invoices-btn"
+                    onClick={handleSubmit}
                 >
                     <CheckCircle2 size={20} />
-                    Process {files.length} Invoice{files.length > 1 ? 's' : ''}
+                    {isProcessing
+                        ? 'Processing...'
+                        : `Process ${files.length} Invoice${
+                              files.length > 1 ? 's' : ''
+                          }`}
                 </motion.button>
             )}
         </motion.div>
