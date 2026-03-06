@@ -1,19 +1,31 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './layout/Navbar';
-import Home from './pages/Home';
-import Gallery from './pages/Gallery';
+import Sidebar from './layout/Sidebar';
+import Topbar from './layout/Topbar';
+import Dashboard from './pages/Dashboard';
+import UploadInvoice from './pages/UploadInvoice';
 
 function App() {
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
     return (
         <Router>
-            <div className="app-container">
-                <Navbar />
-                <main className="content">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/gallery" element={<Gallery />} />
-                    </Routes>
-                </main>
+            <div className="app-layout">
+                <Sidebar
+                    collapsed={sidebarCollapsed}
+                    onToggle={() => setSidebarCollapsed((prev) => !prev)}
+                />
+                <div
+                    className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+                >
+                    <Topbar sidebarCollapsed={sidebarCollapsed} />
+                    <div className="page-content">
+                        <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/upload" element={<UploadInvoice />} />
+                        </Routes>
+                    </div>
+                </div>
             </div>
         </Router>
     );
