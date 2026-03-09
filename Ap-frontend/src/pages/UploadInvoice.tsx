@@ -14,7 +14,7 @@ interface UploadedFile {
     id: string;
     file: File;
     progress: number;
-    status: 'uploading' | 'complete';
+    status: 'idle' | 'uploading' | 'complete';
 }
 
 const UploadInvoice = () => {
@@ -31,35 +31,10 @@ const UploadInvoice = () => {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             file,
             progress: 0,
-            status: 'uploading' as const,
+            status: 'idle' as const,
         }));
 
         setFiles((prev) => [...prev, ...incoming]);
-
-        // Simulate upload progress
-        incoming.forEach((item) => {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 25 + 10;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    setFiles((prev) =>
-                        prev.map((f) =>
-                            f.id === item.id
-                                ? { ...f, progress: 100, status: 'complete' }
-                                : f
-                        )
-                    );
-                } else {
-                    setFiles((prev) =>
-                        prev.map((f) =>
-                            f.id === item.id ? { ...f, progress } : f
-                        )
-                    );
-                }
-            }, 400);
-        });
     }, []);
 
     const removeFile = (id: string) => {
@@ -86,14 +61,56 @@ const UploadInvoice = () => {
     };
 
     const handleSubmit = async () => {
-        if (!allComplete || files.length === 0 || isProcessing) return;
+        if (files.length === 0 || isProcessing) return;
 
         try {
             setIsProcessing(true);
             setError(null);
 
+            // Set all idle files to uploading
+            setFiles((prev) =>
+                prev.map((f) =>
+                    f.status === 'idle' ? { ...f, status: 'uploading' } : f
+                )
+            );
+
+            // Simulate upload progress for all files
+            const simulationPromises = files.map((item) => {
+                if (item.status !== 'idle') return Promise.resolve();
+
+                return new Promise<void>((resolve) => {
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 25 + 15;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            setFiles((prev) =>
+                                prev.map((f) =>
+                                    f.id === item.id
+                                        ? { ...f, progress: 100, status: 'complete' }
+                                        : f
+                                )
+                            );
+                            resolve();
+                        } else {
+                            setFiles((prev) =>
+                                prev.map((f) =>
+                                    f.id === item.id ? { ...f, progress } : f
+                                )
+                            );
+                        }
+                    }, 300);
+                });
+            });
+
             const rawFiles = files.map((f) => f.file);
-            const result = await uploadInvoices(rawFiles);
+
+            // Start the actual API call in parallel with progress simulation
+            const [result] = await Promise.all([
+                uploadInvoices(rawFiles),
+                ...simulationPromises
+            ]);
 
             // TODO: integrate the result into your UI (e.g. navigate to a
             // results page or show extracted data). For now, we just log it.
@@ -103,6 +120,12 @@ const UploadInvoice = () => {
             const message =
                 err instanceof Error ? err.message : 'Failed to process invoices';
             setError(message);
+            // Reset status on error so user can try again
+            setFiles((prev) =>
+                prev.map((f) =>
+                    f.status === 'uploading' ? { ...f, status: 'idle', progress: 0 } : f
+                )
+            );
         } finally {
             setIsProcessing(false);
         }
@@ -210,7 +233,12 @@ const UploadInvoice = () => {
                                 <span
                                     className={`upload-file-status ${item.status}`}
                                 >
-                                    {item.status === 'uploading' ? (
+                                    {item.status === 'idle' ? (
+                                        <>
+                                            <div className="status-dot" style={{ backgroundColor: 'var(--text-secondary)' }} />
+                                            Ready
+                                        </>
+                                    ) : item.status === 'uploading' ? (
                                         <>
                                             <Loader2
                                                 size={12}
@@ -256,20 +284,20 @@ const UploadInvoice = () => {
             {files.length > 0 && (
                 <motion.button
                     className="upload-submit-btn"
-                    disabled={!allComplete || isProcessing}
+                    disabled={(!hasIdleFiles && !allComplete) || isProcessing}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    whileHover={allComplete && !isProcessing ? { scale: 1.02 } : {}}
-                    whileTap={allComplete && !isProcessing ? { scale: 0.98 } : {}}
+                    whileHover={(hasIdleFiles || allComplete) && !isProcessing ? { scale: 1.02 } : {}}
+                    whileTap={(hasIdleFiles || allComplete) && !isProcessing ? { scale: 0.98 } : {}}
                     id="submit-invoices-btn"
                     onClick={handleSubmit}
                 >
                     <CheckCircle2 size={20} />
                     {isProcessing
                         ? 'Processing...'
-                        : `Process ${files.length} Invoice${
-                              files.length > 1 ? 's' : ''
-                          }`}
+                            ? 'Processing Complete'
+                            : `Process ${files.filter(f => f.status === 'idle').length} Invoice${files.filter(f => f.status === 'idle').length > 1 ? 's' : ''
+                            }`}
                 </motion.button>
             )}
         </motion.div>
