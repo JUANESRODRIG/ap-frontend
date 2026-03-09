@@ -51,6 +51,8 @@
   /* Fonts */
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-outfit: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-inter: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-outfit: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Transitions */
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
