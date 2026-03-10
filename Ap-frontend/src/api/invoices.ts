@@ -1,55 +1,56 @@
-import { apiFetch } from './http';
-
-<<<<<<< HEAD
-export interface ParsedInvoice {
-    date?: string;
-    total?: number;
-    vendor?: string;
-    [key: string]: unknown;
+export interface LineItem {
+    description: string;
+    product_code: string | null;
+    quantity: number;
+    unit_price: number;
+    line_total: number;
 }
 
-export interface InvoiceResult {
-    filename: string;
-    rawText: string;
-    parsed: ParsedInvoice;
+export interface InvoiceData {
+    invoice_number: string;
+    invoice_date: string;
+    vendor_name: string;
+    vendor_id: string;
+    po_reference: string;
+    currency: string;
+    invoice_total: number | null;
+    subtotal: number | null;
+    tax_amount: number | null;
+    payment_terms: string | null;
+    line_items: LineItem[];
 }
 
-export interface InvoiceExtractionResponse {
-    invoices: InvoiceResult[];
+export interface N8NInvoiceResponse {
+    success: boolean;
+    popup: boolean;
+    message: string;
+    invoice: InvoiceData;
 }
-export async function uploadInvoices(
-    files: File[]
-): Promise<InvoiceExtractionResponse> {
-=======
+
 /**
- * Uploads one or more invoice files to the backend for extraction / processing.
+ * Uploads one or more invoice files to the n8n webhook for extraction / processing.
  *
  * @param files - Array of File objects selected by the user.
- * @returns The parsed JSON response from the API.
+ * @returns The parsed JSON response from the webhook.
  */
-export async function uploadInvoices(files: File[]): Promise<unknown> {
->>>>>>> ea2487e84586f7918406edea334248618d9b68ca
+export async function uploadInvoices(
+    files: File[]
+): Promise<N8NInvoiceResponse[]> {
     const formData = new FormData();
 
+    // The webhook might expect 'file' or 'files'
     files.forEach((file) => {
-        formData.append('files', file);
+        formData.append('file', file);
     });
 
-<<<<<<< HEAD
-    // We call the Python backend endpoint that will
-    // accept multipart/form-data and return JSON.
-    return apiFetch<InvoiceExtractionResponse>('/api/invoices/extract', {
+    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/upload-invoice', {
         method: 'POST',
         body: formData,
     });
-}
 
-=======
-    return apiFetch('/api/invoices/upload', {
-        method: 'POST',
-        body: formData,
-        // Do NOT set Content-Type — the browser will set it automatically
-        // with the correct multipart boundary.
-    });
+    if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
+    }
+
+    return await response.json();
 }
->>>>>>> ea2487e84586f7918406edea334248618d9b68ca
