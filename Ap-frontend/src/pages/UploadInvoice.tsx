@@ -8,7 +8,8 @@ import {
     Upload,
     Loader2,
 } from 'lucide-react';
-import { uploadInvoices } from '../api/invoices';
+import { uploadInvoices, N8NInvoiceResponse } from '../api/invoices';
+import InvoiceResultModal from './InvoiceResultModal';
 
 interface UploadedFile {
     id: string;
@@ -22,6 +23,8 @@ const UploadInvoice = () => {
     const [dragging, setDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<N8NInvoiceResponse | null>(null);
+    const [showResult, setShowResult] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFiles = useCallback((newFiles: FileList | null) => {
@@ -107,10 +110,16 @@ const UploadInvoice = () => {
             const rawFiles = files.map((f) => f.file);
 
             // Start the actual API call in parallel with progress simulation
-            const [result] = await Promise.all([
+            const [results] = await Promise.all([
                 uploadInvoices(rawFiles),
                 ...simulationPromises
             ]);
+
+            // n8n returns an array, we take the first one for the modal if present
+            if (results && results.length > 0) {
+                setResult(results[0]);
+                setShowResult(true);
+            }
 
             // TODO: integrate the result into your UI (e.g. navigate to a
             // results page or show extracted data). For now, we just log it.
@@ -284,22 +293,28 @@ const UploadInvoice = () => {
             {files.length > 0 && (
                 <motion.button
                     className="upload-submit-btn"
-                    disabled={(!hasIdleFiles && !allComplete) || isProcessing}
+                    disabled={isProcessing || (!files.some(f => f.status === 'idle') && !allComplete)}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    whileHover={(hasIdleFiles || allComplete) && !isProcessing ? { scale: 1.02 } : {}}
-                    whileTap={(hasIdleFiles || allComplete) && !isProcessing ? { scale: 0.98 } : {}}
+                    whileHover={!isProcessing ? { scale: 1.02 } : {}}
+                    whileTap={!isProcessing ? { scale: 0.98 } : {}}
                     id="submit-invoices-btn"
                     onClick={handleSubmit}
                 >
                     <CheckCircle2 size={20} />
                     {isProcessing
                         ? 'Processing...'
+                        : allComplete
                             ? 'Processing Complete'
-                            : `Process ${files.filter(f => f.status === 'idle').length} Invoice${files.filter(f => f.status === 'idle').length > 1 ? 's' : ''
-                            }`}
+                            : `Process ${files.filter(f => f.status === 'idle').length} Invoice${files.filter(f => f.status === 'idle').length > 1 ? 's' : ''}`}
                 </motion.button>
             )}
+
+            <InvoiceResultModal
+                isOpen={showResult}
+                onClose={() => setShowResult(false)}
+                data={result}
+            />
         </motion.div>
     );
 };
