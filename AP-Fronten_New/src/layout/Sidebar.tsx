@@ -10,6 +10,8 @@ import {
 interface Props {
     collapsed: boolean;
     onToggle: () => void;
+    mobileOpen?: boolean;
+    onMobileClose?: () => void;
 }
 
 const navItems = [
@@ -17,61 +19,77 @@ const navItems = [
     { label: "Upload Invoice", icon: Upload, path: "/upload" },
 ];
 
-function Sidebar({ collapsed, onToggle }: Props) {
+function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Props) {
     const location = useLocation();
 
+    const handleNavClick = () => {
+        // Close mobile sidebar when navigating
+        if (onMobileClose) onMobileClose();
+    };
+
     return (
-        <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-            {/* Logo */}
-            <div className="sidebar-logo">
-                <div className="sidebar-logo-icon">
-                    <Zap />
-                </div>
-                <div className="sidebar-logo-text">
-                    <h1>AP Intelligence</h1>
-                    <span>Invoice Platform</span>
+        <>
+            {/* Mobile backdrop */}
+            {mobileOpen && (
+                <div 
+                    className="mobile-sidebar-backdrop"
+                    onClick={onMobileClose}
+                />
+            )}
+
+            <aside className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
+                {/* Logo */}
+                <div className="sidebar-logo">
+                    <div className="sidebar-logo-icon">
+                        <Zap />
+                    </div>
+                    <div className="sidebar-logo-text">
+                        <h1>AP Intelligence</h1>
+                        <span>Invoice Platform</span>
+                    </div>
+
+                    <button
+                        className="sidebar-toggle"
+                        onClick={onToggle}
+                        aria-label="Toggle sidebar"
+                    >
+                        <ChevronLeft />
+                    </button>
                 </div>
 
-                <button
-                    className="sidebar-toggle"
-                    onClick={onToggle}
-                    aria-label="Toggle sidebar"
-                >
-                    <ChevronLeft />
-                </button>
-            </div>
+                {/* Navigation */}
+                <nav className="sidebar-nav">
+                    <div className="sidebar-section-label">Main</div>
 
-            {/* Navigation */}
-            <nav className="sidebar-nav">
-                <div className="sidebar-section-label">Main</div>
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.path;
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`sidebar-nav-item ${isActive ? "active" : ""}`}
+                                onClick={handleNavClick}
+                            >
+                                <Icon />
+                                <span>{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
 
-                {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`sidebar-nav-item ${isActive ? "active" : ""}`}
-                        >
-                            <Icon />
-                            <span>{item.label}</span>
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            {/* User profile */}
-            <div className="sidebar-user">
-                <div className="sidebar-user-avatar">
-                    <User />
+                {/* User profile */}
+                <div className="sidebar-user">
+                    <div className="sidebar-user-avatar">
+                        <User />
+                    </div>
+                    <div className="sidebar-user-info">
+                        <span className="user-name">Admin User</span>
+                        <span className="user-role">Finance Team</span>
+                    </div>
                 </div>
-                <div className="sidebar-user-info">
-                    <span className="user-name">Admin User</span>
-                    <span className="user-role">Finance Team</span>
-                </div>
-            </div>
-        </aside>
+            </aside>
+        </>
     );
 }
 

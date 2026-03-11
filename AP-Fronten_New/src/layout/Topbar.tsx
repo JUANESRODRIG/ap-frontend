@@ -1,17 +1,28 @@
-import { Search, Bell, Settings, Moon, Sun } from "lucide-react";
+import { Search, Bell, Settings, Moon, Sun, Menu } from "lucide-react";
 import { useTheme } from "../lib/ThemeContext";
 
 interface Props {
     sidebarCollapsed: boolean;
     title: string;
+    onMobileMenuToggle?: () => void;
 }
 
-function Topbar({ sidebarCollapsed, title }: Props) {
+function Topbar({ sidebarCollapsed, title, onMobileMenuToggle }: Props) {
     const { theme, toggleTheme } = useTheme();
 
     return (
         <header className={`topbar ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
             <div className="topbar-left">
+                {/* Mobile hamburger menu */}
+                {onMobileMenuToggle && (
+                    <button 
+                        className="topbar-icon-btn topbar-mobile-menu"
+                        onClick={onMobileMenuToggle}
+                        aria-label="Open menu"
+                    >
+                        <Menu />
+                    </button>
+                )}
                 <h2 className="topbar-title">{title}</h2>
             </div>
 
