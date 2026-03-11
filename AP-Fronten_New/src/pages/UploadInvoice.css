@@ -1,0 +1,94 @@
+.upload-page {
+    animation: fadeIn 0.35s ease-out both;
+    height: 100%;
+}
+
+.upload-header {
+    margin-bottom: 40px;
+}
+
+.upload-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #8b5cf6;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+}
+
+.upload-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.upload-dropzone {
+    border: 2px dashed #8b5cf6;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0.01) 100%);
+    padding: 80px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all var(--transition-base);
+    cursor: pointer;
+    max-width: 900px;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.active {
+    border-color: #a78bfa;
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%);
+}
+
+.upload-icon-container {
+    width: 72px;
+    height: 72px;
+    background: rgba(139, 92, 246, 0.15);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    color: #a78bfa;
+}
+
+.upload-dropzone-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.upload-dropzone-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+.upload-btn {
+    background: linear-gradient(135deg, #8b5cf6, #0ea5e9);
+    color: white;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    border: none;
+    cursor: pointer;
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.35);
+}
+
+.upload-footer-text {
+    margin-top: 40px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
