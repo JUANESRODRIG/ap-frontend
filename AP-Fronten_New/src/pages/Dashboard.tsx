@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import KPIBox from "../components/cards/KPIBox";
-import AgentPanel from "../components/cards/AgentPanel";
+import ThreeWayMatchingPanel from "../components/cards/ThreeWayMatchingPanel";
+import BlockResolutionPanel from "../components/cards/BlockResolutionPanel";
 import RootCauseChart from "../components/charts/RootCauseChart";
 import OrdersTable from "../components/tables/OrdersTable";
 import VendorPerformanceTable from "../components/tables/VendorPerformanceTable";
@@ -162,7 +163,7 @@ function Dashboard() {
         <div className="animate-fade-in-up">
 
             <div className="welcome-card" style={{ marginBottom: "2rem" }}>
-                <h2>Welcome back, Admin go for a walk 👋</h2>
+                <h2>Welcome back, Admin 👋</h2>
                 <p>
                     Here's what's happening with your invoices today. You have{" "}
                     <strong>{invoices.length} invoices</strong> awaiting review.
@@ -210,24 +211,19 @@ function Dashboard() {
             </div>
 
             <div className="agent-grid">
-                <AgentPanel
-                    title="3 Way Matching Agent"
-                    value1={invoices.length - exceptions.length}
-                    label1="Touchless Approvals"
-                    value2={`${exceptionRate}%`}
-                    label2="Exception Rate"
+                <ThreeWayMatchingPanel
+                    touchlessApprovals={invoices.length - exceptions.length}
+                    exceptionRate={exceptionRate}
+                    topException="Price Variance"
+                    topExceptionCount={34}
                 />
 
-                <div className="agent-panel">
-                    <h3>Root Cause Agent</h3>
+                <div className="agent-panel" style={{ padding: "24px 28px" }}>
+                    <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "20px" }}>Root Cause Agent</h3>
                     <RootCauseChart data={rootCauseData} />
                 </div>
 
-                <AgentPanel
-                    title="Block Resolution"
-                    value1={resolvedIssues}
-                    label1="Issues Resolved"
-                />
+                <BlockResolutionPanel resolvedCount={resolvedIssues} />
             </div>
 
             {loading ? (

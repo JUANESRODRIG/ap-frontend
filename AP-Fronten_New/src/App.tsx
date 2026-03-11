@@ -4,6 +4,7 @@ import Sidebar from "./layout/Sidebar";
 import Topbar from "./layout/Topbar";
 import Dashboard from "./pages/Dashboard";
 import UploadInvoice from "./pages/UploadInvoice";
+import { ThemeProvider } from "./lib/ThemeContext";
 
 /* Maps route paths to page titles */
 const pageTitles: Record<string, string> = {
@@ -13,6 +14,7 @@ const pageTitles: Record<string, string> = {
 
 function AppContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const pageTitle = pageTitles[location.pathname] || "Dashboard";
 
@@ -21,10 +23,16 @@ function AppContent() {
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((prev) => !prev)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
       />
 
       <div className={`main-wrapper ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-        <Topbar sidebarCollapsed={sidebarCollapsed} title={pageTitle} />
+        <Topbar
+          sidebarCollapsed={sidebarCollapsed}
+          title={pageTitle}
+          onMobileMenuToggle={() => setMobileOpen((prev) => !prev)}
+        />
 
         <main className="main-content">
           <Routes>
@@ -36,8 +44,6 @@ function AppContent() {
     </div>
   );
 }
-
-import { ThemeProvider } from "./lib/ThemeContext";
 
 function App() {
   return (
