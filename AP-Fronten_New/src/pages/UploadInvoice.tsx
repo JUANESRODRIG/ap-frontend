@@ -1,6 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { CloudUpload, Upload, CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from "react";
+import { CloudUpload, Upload } from "lucide-react";
 import "./UploadInvoice.css";
 import { uploadInvoices } from "../services/invoiceService";
 import type { N8NInvoiceResponse } from "../types/invoice";
@@ -14,17 +13,17 @@ function UploadInvoice() {
     const [showResult, setShowResult] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleDragOver = (e: React.DragEvent) => {
+    const handleDragOver = (e: DragEvent) => {
         e.preventDefault();
         setIsDragging(true);
     };
 
-    const handleDragLeave = (e: React.DragEvent) => {
+    const handleDragLeave = (e: DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = (e: DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -34,7 +33,7 @@ function UploadInvoice() {
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);

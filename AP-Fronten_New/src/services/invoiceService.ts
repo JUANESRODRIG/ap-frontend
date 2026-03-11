@@ -1,4 +1,4 @@
-import { N8NInvoiceResponse } from '../types/invoice';
+import type { N8NInvoiceResponse } from '../types/invoice';
 
 /**
  * Uploads one or more invoice files to the n8n webhook for extraction / processing.
