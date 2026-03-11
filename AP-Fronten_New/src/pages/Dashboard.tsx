@@ -162,7 +162,7 @@ function Dashboard() {
         <div className="animate-fade-in-up">
 
             <div className="welcome-card" style={{ marginBottom: "2rem" }}>
-                <h2>Welcome back, Admin 👋</h2>
+                <h2>Welcome back, Admin go for a walk 👋</h2>
                 <p>
                     Here's what's happening with your invoices today. You have{" "}
                     <strong>{invoices.length} invoices</strong> awaiting review.
