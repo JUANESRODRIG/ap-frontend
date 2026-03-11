@@ -1,11 +1,17 @@
-import { useState, useRef } from "react";
-import { CloudUpload, Upload } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { CloudUpload, Upload, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 import "./UploadInvoice.css";
+import { uploadInvoices } from "../services/invoiceService";
+import type { N8NInvoiceResponse } from "../types/invoice";
+import InvoiceResultModal from "./InvoiceResultModal";
 
 function UploadInvoice() {
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [result, setResult] = useState<N8NInvoiceResponse | null>(null);
+    const [showResult, setShowResult] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -36,35 +42,30 @@ function UploadInvoice() {
         }
     };
 
-    async function upload(selectedFile: File) {
+    const upload = useCallback(async (selectedFile: File) => {
         if (!selectedFile) return;
 
         setUploading(true);
-
-        const formData = new FormData();
-        formData.append("file", selectedFile);
+        setResult(null);
 
         try {
-            const res = await fetch("https://n8n.sofiatechnology.ai/webhook-test/upload-invoices", {
+            const results = await uploadInvoices([selectedFile]);
 
-                //     https://n8n.sofiatechnology.ai/webhook-test/upload-invoice 
-                method: "POST",
-                body: formData,
-            });
+            // n8n returns an array, we take the first one for the modal if present
+            if (results && results.length > 0) {
+                setResult(results[0]);
+                setShowResult(true);
+            }
 
-            const data = await res.json();
-            console.log("n8n response:", data);
-
-            alert("Invoice uploaded successfully!");
-            setFile(null); // Reset state after alert to show clean dropzone again
+            setFile(null); // Reset state to show clean dropzone again
         } catch (error) {
             console.error(error);
             alert("Error uploading invoice");
             setFile(null);
+        } finally {
+            setUploading(false);
         }
-
-        setUploading(false);
-    }
+    }, [uploadInvoices]);
 
     return (
         <div className="upload-page">
@@ -113,8 +114,18 @@ function UploadInvoice() {
                 <p className="upload-footer-text">
                     Supported: PDF, PNG, JPG, XLSX, CSV — Max 25MB per file
                 </p>
-                {uploading && file && <p style={{ marginTop: 10, color: '#8b5cf6', fontSize: '0.85rem' }}>Uploading: {file.name}...</p>}
+                {uploading && file && (
+                    <p style={{ marginTop: 10, color: '#8b5cf6', fontSize: '0.85rem' }}>
+                        Uploading: {file.name}...
+                    </p>
+                )}
             </div>
+
+            <InvoiceResultModal
+                isOpen={showResult}
+                onClose={() => setShowResult(false)}
+                data={result}
+            />
         </div>
     );
 }
