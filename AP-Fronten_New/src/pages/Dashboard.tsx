@@ -154,45 +154,23 @@ function Dashboard() {
         setParkedValue(parkedVal);
         setClearedValue(cleared);
 
-        // Derive Non-PO Pipeline statistics
-        const pending = inv.filter(i => {
-            const s = (i.status || "").toLowerCase();
-            return s.includes("pending") || s.includes("processing") || s.includes("review");
-        });
+        // KPI 1: Non-PO Invoices Pending Approval
+        // po_reference IS NULL AND status IN ('Processing','Parked','Exception')
+        const nonPoPending = inv.filter(i => 
+            !i.po_reference && 
+            ['Processing', 'Parked', 'Exception'].includes(i.status)
+        );
+        setNonPoPendingCount(nonPoPending.length);
 
-        if (pending.length > 0) {
-            setNonPoPendingCount(pending.length);
-            
-            const unclassVendors = new Set(
-                pending.filter(i => !i.category || i.category.toLowerCase() === "unclassified" || i.category.toLowerCase() === "uncategorized")
-                .map(i => i.vendor_id)
-            ).size;
-            setUnclassifiedVendorsCount(unclassVendors);
-            
-            const catCounts: Record<string, number> = {};
-            pending.forEach(i => {
-                const cat = i.category || "Unclassified";
-                catCounts[cat] = (catCounts[cat] || 0) + 1;
-            });
-            
-            const derivedTable = Object.entries(catCounts).map(([cat, count]) => {
-                const statusType = count > 5 ? 'notify' : count > 3 ? 'overdue' : 'review';
-                const status = statusType === 'notify' ? 'Notified' : statusType === 'overdue' ? 'Overdue' : 'In AP Review';
-                return {
-                    category: cat,
-                    invCount: count,
-                    avgAge: "3.5 days", // historical approval timestamps not derivable
-                    status: status,
-                    statusType: statusType
-                };
-            }).sort((a, b) => b.invCount - a.invCount);
-            
-            setNonPoTableData(derivedTable);
-        } else {
-            setNonPoPendingCount(undefined);
-            setUnclassifiedVendorsCount(undefined);
-            setNonPoTableData(undefined);
-        }
+        // KPI 2: Unclassified Vendors (AP Review Queue)
+        // po_reference IS NULL AND vendor_id IS NULL
+        const unclassifiedVendors = inv.filter(i => 
+            !i.po_reference && !i.vendor_id
+        );
+        setUnclassifiedVendorsCount(unclassifiedVendors.length);
+        
+        // Use mock data for now
+        setNonPoTableData(undefined);
     }
 
     const exceptionRate =
