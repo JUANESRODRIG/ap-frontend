@@ -248,3 +248,99 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+.clarification-notice {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 32px;
+    color: var(--text-secondary);
+}
+
+.clarification-notice p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.clarification-notice svg {
+    color: var(--accent-blue);
+    flex-shrink: 0;
+}
+
+.suggestion-details {
+    margin-bottom: 32px;
+}
+
+.suggestion-card {
+    background: var(--bg-surface-elevated);
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.suggestion-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.suggestion-field.full-width {
+    grid-column: span 2;
+}
+
+.suggestion-field .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.category-badge {
+    padding: 6px 12px;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-primary);
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    width: fit-content;
+}
+
+.confidence-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    width: fit-content;
+}
+
+.confidence-badge.high {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.confidence-badge.medium {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.confidence-badge.low {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.reason-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-style: italic;
+}
