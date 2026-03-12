@@ -48,12 +48,18 @@ function UploadInvoice() {
         setResult(null);
 
         try {
-            const results = await uploadInvoices([selectedFile]);
+            const responseData = await uploadInvoices([selectedFile]);
+            console.log("Webhook Response:", responseData);
 
-            // n8n returns an array, we take the first one for the modal if present
-            if (results && results.length > 0) {
-                setResult(results[0]);
-                setShowResult(true);
+            if (responseData) {
+                // Handle both array and single object response
+                if (Array.isArray(responseData) && responseData.length > 0) {
+                    setResult(responseData[0]);
+                    setShowResult(true);
+                } else if (!Array.isArray(responseData)) {
+                    setResult(responseData as any);
+                    setShowResult(true);
+                }
             }
 
             setFile(null); // Reset state to show clean dropzone again
