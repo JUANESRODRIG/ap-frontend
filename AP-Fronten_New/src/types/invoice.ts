@@ -26,11 +26,27 @@ export interface InvoiceData {
     tax_amount: number | null;
     payment_terms: string | null;
     line_items: LineItem[];
+    description?: string;
+    suggested_category?: string;
+    reason?: string;
+    confidence?: string;
+    no_po_no_match?: boolean;
 }
 
 export interface N8NInvoiceResponse {
-    success: boolean;
-    popup: boolean;
-    message: string;
-    invoice: InvoiceData;
+    success?: boolean;
+    popup?: boolean;
+    message?: string;
+    invoice?: InvoiceData;
+    // Fields for the "suggested category" response structure
+    vendor_name?: string;
+    invoice_number?: string;
+    invoice_date?: string;
+    description?: string;
+    currency?: string;
+    invoice_total?: string | number;
+    suggested_category?: string;
+    reason?: string;
+    confidence?: string;
+    no_po_no_match?: boolean;
 }
