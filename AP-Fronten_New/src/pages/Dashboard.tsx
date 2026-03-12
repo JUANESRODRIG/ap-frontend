@@ -5,6 +5,7 @@ import BlockResolutionPanel from "../components/cards/BlockResolutionPanel";
 import RootCauseChart from "../components/charts/RootCauseChart";
 import OrdersTable from "../components/tables/OrdersTable";
 import VendorPerformanceTable from "../components/tables/VendorPerformanceTable";
+import NonPoPipeline from "../components/cards/NonPoPipeline";
 import { supabase } from "../lib/supabase";
 import { FileText, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
 
@@ -18,6 +19,10 @@ function Dashboard() {
     const [straightThroughRate, setStraightThroughRate] = useState(0);
     const [parkedValue, setParkedValue] = useState(0);
     const [clearedValue, setClearedValue] = useState(0);
+
+    const [nonPoPendingCount, setNonPoPendingCount] = useState<number | undefined>(undefined);
+    const [unclassifiedVendorsCount, setUnclassifiedVendorsCount] = useState<number | undefined>(undefined);
+    const [nonPoTableData, setNonPoTableData] = useState<any[] | undefined>(undefined);
 
     function generateRootCauseData(exceptions: any[]) {
         const counts: any = {};
@@ -148,6 +153,46 @@ function Dashboard() {
 
         setParkedValue(parkedVal);
         setClearedValue(cleared);
+
+        // Derive Non-PO Pipeline statistics
+        const pending = inv.filter(i => {
+            const s = (i.status || "").toLowerCase();
+            return s.includes("pending") || s.includes("processing") || s.includes("review");
+        });
+
+        if (pending.length > 0) {
+            setNonPoPendingCount(pending.length);
+            
+            const unclassVendors = new Set(
+                pending.filter(i => !i.category || i.category.toLowerCase() === "unclassified" || i.category.toLowerCase() === "uncategorized")
+                .map(i => i.vendor_id)
+            ).size;
+            setUnclassifiedVendorsCount(unclassVendors);
+            
+            const catCounts: Record<string, number> = {};
+            pending.forEach(i => {
+                const cat = i.category || "Unclassified";
+                catCounts[cat] = (catCounts[cat] || 0) + 1;
+            });
+            
+            const derivedTable = Object.entries(catCounts).map(([cat, count]) => {
+                const statusType = count > 5 ? 'notify' : count > 3 ? 'overdue' : 'review';
+                const status = statusType === 'notify' ? 'Notified' : statusType === 'overdue' ? 'Overdue' : 'In AP Review';
+                return {
+                    category: cat,
+                    invCount: count,
+                    avgAge: "3.5 days", // historical approval timestamps not derivable
+                    status: status,
+                    statusType: statusType
+                };
+            }).sort((a, b) => b.invCount - a.invCount);
+            
+            setNonPoTableData(derivedTable);
+        } else {
+            setNonPoPendingCount(undefined);
+            setUnclassifiedVendorsCount(undefined);
+            setNonPoTableData(undefined);
+        }
     }
 
     const exceptionRate =
@@ -173,6 +218,12 @@ function Dashboard() {
             <div className="dashboard-header-container">
                 <h1 className="dashboard-title">Dashboard Overview</h1>
             </div>
+
+            <NonPoPipeline 
+                pendingApprovalCount={nonPoPendingCount}
+                unclassifiedVendorsCount={unclassifiedVendorsCount}
+                tableData={nonPoTableData}
+            />
 
             <div className="kpi-grid">
 
@@ -223,7 +274,10 @@ function Dashboard() {
                     <RootCauseChart data={rootCauseData} />
                 </div>
 
-                <BlockResolutionPanel resolvedCount={resolvedIssues} />
+                <BlockResolutionPanel 
+                    resolvedCount={resolvedIssues} 
+                    touchlessRate={straightThroughRate} 
+                />
             </div>
 
             {loading ? (
