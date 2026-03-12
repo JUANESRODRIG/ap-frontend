@@ -1,6 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, FileText, Info } from 'lucide-react';
+import { X, CheckCircle2, FileText, Info, Save } from 'lucide-react';
 import type { N8NInvoiceResponse } from '../types/invoice';
+import { confirmInvoice } from '../services/invoiceService';
+import { useState } from 'react';
+import './InvoiceResultModal.css';
 
 interface InvoiceResultModalProps {
     isOpen: boolean;
@@ -9,16 +12,38 @@ interface InvoiceResultModalProps {
 }
 
 const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) => {
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
     if (!isOpen || !data) return null;
 
     const { message, invoice } = data;
+
+    const handleConfirm = async () => {
+        setIsConfirming(true);
+        setError(null);
+        try {
+            await confirmInvoice();
+            setIsSuccess(true);
+            setTimeout(() => {
+                onClose();
+                setIsSuccess(false);
+            }, 2000);
+        } catch (err) {
+            setError('Failed to confirm invoice. Please try again.');
+            console.error(err);
+        } finally {
+            setIsConfirming(false);
+        }
+    };
 
     return (
         <AnimatePresence>
             <div className="modal-overlay" onClick={onClose}>
                 <motion.div
                     className="modal-content"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -97,9 +122,40 @@ const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) 
                     </div>
 
                     <div className="modal-footer">
-                        <button className="btn-primary" onClick={onClose}>
-                            Done
-                        </button>
+                        {isSuccess ? (
+                            <div className="success-message">
+                                <CheckCircle2 size={20} />
+                                <span>Invoice Saved Successfully!</span>
+                            </div>
+                        ) : (
+                            <>
+                                {error && <span className="error-text" style={{ color: 'var(--accent-red)', fontSize: '0.85rem', marginRight: 'auto' }}>{error}</span>}
+                                <button 
+                                    className="btn-secondary" 
+                                    onClick={onClose}
+                                    disabled={isConfirming}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    className="btn-primary" 
+                                    onClick={handleConfirm}
+                                    disabled={isConfirming}
+                                >
+                                    {isConfirming ? (
+                                        <>
+                                            <div className="spinner"></div>
+                                            Confirming...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={18} />
+                                            Confirm & Save Invoice
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </motion.div>
             </div>
