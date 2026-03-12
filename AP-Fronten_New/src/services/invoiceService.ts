@@ -16,7 +16,7 @@ export async function uploadInvoices(
         formData.append('file', file);
     });
 
-    const response = await fetch('/n8n-api/webhook-test/upload-invoice', {
+    const response = await fetch('/n8n-api/webhook/upload-invoices', {
         method: 'POST',
         body: formData,
     });
@@ -26,4 +26,19 @@ export async function uploadInvoices(
     }
 
     return await response.json();
+}
+
+/**
+ * Triggers the n8n webhook to confirm and save the invoice data.
+ */
+export async function confirmInvoice(): Promise<void> {
+    const webhookUrl = '/n8n-api/webhook/saveinvoice';
+
+    const response = await fetch(webhookUrl, {
+        method: 'GET',
+    });
+
+    if (!response.ok) {
+        throw new Error(`Confirmation failed with status ${response.status}`);
+    }
 }
