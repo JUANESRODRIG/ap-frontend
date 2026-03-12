@@ -63,7 +63,7 @@ function NonPoPipeline({
                 <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                     Non-PO Invoices Pending Approval
                 </p>
-                <h3 style={{ fontSize: "2.4rem", fontWeight: 500, margin: 0, color: "var(--text-primary)", lineHeight: 1 }}>{pendingApprovalCount}</h3>
+                <h3 style={{ fontSize: "2.0rem", fontWeight: 500, margin: 0, color: "var(--text-primary)", lineHeight: 1 }}>{pendingApprovalCount}</h3>
             </div>
 
             {/* KPI Card 2 */}
@@ -80,7 +80,7 @@ function NonPoPipeline({
                 <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                     Unclassified Vendors (AP Review Queue)
                 </p>
-                <h3 style={{ fontSize: "2.4rem", fontWeight: 500, margin: 0, color: "#f59e0b", lineHeight: 1 }}>{unclassifiedVendorsCount}</h3>
+                <h3 style={{ fontSize: "2.0rem", fontWeight: 500, margin: 0, color: "#f59e0b", lineHeight: 1 }}>{unclassifiedVendorsCount}</h3>
             </div>
 
             {/* KPI Card 3 */}
@@ -98,10 +98,10 @@ function NonPoPipeline({
                     Avg. Approval Time
                 </p>
                 <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                    <h3 style={{ fontSize: "2.4rem", fontWeight: 500, margin: 0, color: "var(--text-primary)", lineHeight: 1 }}>
+                    <h3 style={{ fontSize: "2.0rem", fontWeight: 500, margin: 0, color: "var(--text-primary)", lineHeight: 1 }}>
                         {avgApprovalTime}
                     </h3>
-                    <span style={{ fontSize: "1.2rem", fontWeight: 500, color: "var(--text-primary)" }}>days</span>
+                    <span style={{ fontSize: "1.1rem", fontWeight: 500, color: "var(--text-primary)" }}>days</span>
                 </div>
             </div>
 
