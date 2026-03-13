@@ -52,10 +52,15 @@ function UploadInvoice() {
             console.log("Webhook Response:", responseData);
 
             if (responseData) {
-                // Handle both array and single object response
-                if (Array.isArray(responseData) && responseData.length > 0) {
-                    setResult(responseData[0]);
-                    setShowResult(true);
+                // Handle empty arrays returned by fallback
+                if (Array.isArray(responseData)) {
+                    if (responseData.length > 0) {
+                        setResult(responseData[0]);
+                        setShowResult(true);
+                    } else {
+                        // Empty response (e.g no JSON from webhook)
+                        throw new Error("No usable data received from the webhook response.");
+                    }
                 } else if (!Array.isArray(responseData)) {
                     setResult(responseData as any);
                     setShowResult(true);

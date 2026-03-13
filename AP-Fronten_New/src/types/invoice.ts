@@ -49,4 +49,11 @@ export interface N8NInvoiceResponse {
     reason?: string;
     confidence?: string;
     no_po_no_match?: boolean;
+    // Fields for the "Matched" response structure
+    owner_name?: string;
+    match_status?: string;
+    issues?: string;
+    summary?: string;
+    vendor_id?: string;
+    po_reference?: string;
 }
