@@ -19,16 +19,25 @@ export async function uploadInvoices(
     const response = await fetch('https://n8n.sofiatechnology.ai/webhook/invoices', {
         method: 'POST',
         body: formData,
-        // https://n8n.sofiatechnology.ai/webhook-test/upload-invoices
+
     });
 
     if (!response.ok) {
         throw new Error(`Upload failed with status ${response.status}`);
     }
 
-    return await response.json();
-}
+    const text = await response.text();
+    if (!text) {
+        return [] as any; // Safe fallback for empty webhook responses
+    }
 
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("Failed to parse response as JSON:", text);
+        return [] as any; // Fallback to avoid breaking the UI
+    }
+}
 /**
  * Triggers the n8n webhook to confirm and save the invoice data.
  */

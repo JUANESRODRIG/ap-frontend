@@ -93,7 +93,7 @@ function BlockResolutionPanel({ resolvedCount, touchlessRate = 68 }: Props) {
             </div>
 
             <div style={{ height: "240px", width: "100%", marginBottom: "30px" }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                     <ComposedChart data={mockChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                         <XAxis 

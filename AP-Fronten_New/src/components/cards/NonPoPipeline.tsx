@@ -128,7 +128,7 @@ function NonPoPipeline({
                 }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem", textAlign: "left", flexGrow: 1 }}>
                         <thead>
-                            <tr style={{ backgroundColor: "#f9fafb" }}>
+                            <tr style={{ backgroundColor: "var(--bg-surface-elevated)" }}>
                                 <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>CATEGORY</th>
                                 <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}># INV</th>
                                 <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>AVG AGE</th>
