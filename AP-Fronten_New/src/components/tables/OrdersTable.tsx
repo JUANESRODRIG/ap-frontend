@@ -42,6 +42,7 @@ function OrdersTable({ invoices }: Props) {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const hasFilters = vendorFilter !== "All Vendors" || statusFilter !== "All Statuses" || categoryFilter !== "All Categories";
 
   const uniqueVendors = useMemo(() => ["All Vendors", ...Array.from(new Set(invoices.map(i => i.vendor_id)))], [invoices]);
   const uniqueStatuses = useMemo(() => ["All Statuses", ...Array.from(new Set(invoices.map(i => i.status)))], [invoices]);
@@ -72,6 +73,28 @@ function OrdersTable({ invoices }: Props) {
       <div className="table-header" style={{ marginBottom: showFilters ? "20px" : "24px" }}>
         <h3 className="table-title" style={{ color: "var(--text-primary)", fontSize: "1.2rem" }}>Recent Invoices</h3>
         <div style={{ display: "flex", gap: "10px" }}>
+          {hasFilters && (
+            <button 
+              className="table-header-action"
+              style={{ 
+                background: "var(--accent-primary, #7c3aed)",
+                border: "none",
+                color: "white",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <Send size={16} />
+              Send in bulk
+            </button>
+          )}
           <button 
             className={`table-header-action ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}

@@ -105,7 +105,7 @@ function NonPoPipeline({
             {/* Table Card */}
             <div style={{ display: "flex", flexDirection: "column" }}>
                 <h3 style={{ 
-                    fontSize: "0.75rem", 
+                    fontSize: "0.65rem", 
                     fontWeight: 700, 
                     color: "var(--text-muted)", 
                     marginBottom: "8px", 
@@ -114,20 +114,28 @@ function NonPoPipeline({
                 }}>
                     Pending Approvals
                 </h3>
-                <div className="agent-panel" style={{ padding: "0", overflow: "hidden", height: "100%", display: "flex", flexDirection: "column" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.80rem", textAlign: "left", flexGrow: 1 }}>
+                <div className="agent-panel" style={{ 
+                    padding: "0", 
+                    overflow: "hidden", 
+                    height: "100%", 
+                    display: "flex", 
+                    flexDirection: "column",
+                    borderLeft: "3px solid #6366f1",
+                    borderRadius: "16px"
+                }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.75rem", textAlign: "left", flexGrow: 1 }}>
                         <thead>
-                            <tr style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
-                                <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>CATEGORY</th>
-                                <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}># INV</th>
-                                <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>AVG AGE</th>
-                                <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>STATUS</th>
+                            <tr style={{ backgroundColor: "#f9fafb" }}>
+                                <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>CATEGORY</th>
+                                <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}># INV</th>
+                                <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>AVG AGE</th>
+                                <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 600, borderBottom: "1px solid var(--border-color)" }}>STATUS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {tableData.map((row, idx) => (
                                 <tr key={idx} style={{ 
-                                    backgroundColor: "var(--card-bg)",
+                                    backgroundColor: "var(--bg-card)",
                                     borderBottom: idx < tableData.length - 1 ? "1px solid var(--border-color)" : "none"
                                 }}>
                                     <td style={{ padding: "12px 16px", color: "var(--text-primary)" }}>{row.category}</td>
@@ -149,8 +157,8 @@ function NonPoPipeline({
                                                 row.statusType === 'overdue' ? '#d97706' : '#6b7280'
                                             }`,
                                             backgroundColor: `${
-                                                row.statusType === 'notify' ? '#ecfdf5' : 
-                                                row.statusType === 'overdue' ? '#fffbeb' : '#f3f4f6'
+                                                row.statusType === 'notify' ? 'rgba(16, 185, 129, 0.1)' : 
+                                                row.statusType === 'overdue' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(107, 114, 128, 0.1)'
                                             }`
                                         }}>
                                             {row.status}
