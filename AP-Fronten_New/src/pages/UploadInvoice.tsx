@@ -65,7 +65,6 @@ function UploadInvoice() {
             setFile(null); // Reset state to show clean dropzone again
         } catch (error) {
             console.error(error);
-            alert("Error uploading invoice");
             setFile(null);
         } finally {
             setUploading(false);
