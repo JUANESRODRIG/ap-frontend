@@ -98,7 +98,7 @@ function ThreeWayMatchingPanel({
                     <Crosshair size={22} color="#10b981" />
                 </div>
                 <div className="three-way-title-group">
-                    <h3 className="three-way-title">3-Way Matching Agent</h3>
+                    <h3 className="three-way-title">Matching Agent</h3>
                     <span className="three-way-badge">PO Pipeline</span>
                 </div>
             </div>

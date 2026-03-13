@@ -138,7 +138,7 @@ function NonPoPipeline({
                         <tbody>
                             {tableData.map((row, idx) => (
                                 <tr key={idx} style={{ 
-                                    backgroundColor: "var(--card-bg)",
+                                    backgroundColor: "var(--bg-card)",
                                     borderBottom: idx < tableData.length - 1 ? "1px solid var(--border-color)" : "none"
                                 }}>
                                     <td style={{ padding: "10px 14px", color: "var(--text-primary)", fontWeight: 500 }}>{row.category}</td>
@@ -160,8 +160,8 @@ function NonPoPipeline({
                                                 row.statusType === 'overdue' ? '#d97706' : '#4b5563'
                                             }`,
                                             backgroundColor: `${
-                                                row.statusType === 'notify' ? '#ecfdf5' : 
-                                                row.statusType === 'overdue' ? '#fffbeb' : '#f3f4f6'
+                                                row.statusType === 'notify' ? 'rgba(16, 185, 129, 0.1)' : 
+                                                row.statusType === 'overdue' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(107, 114, 128, 0.1)'
                                             }`
                                         }}>
                                             {row.status}

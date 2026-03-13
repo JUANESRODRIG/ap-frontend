@@ -248,7 +248,7 @@ function Dashboard() {
                 />
 
                 <div className="agent-panel" style={{ padding: "24px 28px" }}>
-                    <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "20px" }}>Root Cause Agent</h3>
+                    <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "20px" }}>Analysis Agent</h3>
                     <RootCauseChart data={rootCauseData} />
                 </div>
 
@@ -264,14 +264,11 @@ function Dashboard() {
                 </div>
             ) : (
                 <>
-                    <OrdersTable invoices={invoices} />
-
-                    <div className="vendor-section" style={{ marginTop: "30px" }}>
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "20px" }}>
-                            Vendor Performance
-                        </h2>
+                    <div className="vendor-section" style={{ marginBottom: "30px" }}>
                         <VendorPerformanceTable vendors={vendors} />
                     </div>
+
+                    <OrdersTable invoices={invoices} />
                 </>
             )}
 
