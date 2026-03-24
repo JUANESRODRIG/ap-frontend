@@ -292,7 +292,7 @@ function Dashboard() {
             )}
                 </>
             ) : (
-                <NonPoDashboard />
+                <NonPoDashboard invoices={invoices.filter(i => !i.po_reference)} />
             )}
 
         </div>

@@ -1,9 +1,9 @@
-import React from "react";
 import KPIBox from "../components/cards/KPIBox";
+import NonPoTable from "../components/tables/NonPoTable";
 import { FileText, Clock, Percent, AlertCircle } from "lucide-react";
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart,
-  BarChart, Bar, Cell, YAxis as BarYAxis, XAxis as BarXAxis, LabelList
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart,
+  BarChart, Bar, Cell
 } from "recharts";
 
 // Mock data for the charts
@@ -34,7 +34,11 @@ const confidenceDistributionData = [
   { name: '65-74%', value: 12, max: 100 },
 ];
 
-function NonPoDashboard() {
+interface Props {
+  invoices: any[];
+}
+
+function NonPoDashboard({ invoices }: Props) {
   return (
     <div className="animate-fade-in-up">
       <div className="non-po-header">
@@ -164,6 +168,10 @@ function NonPoDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Render the Detailed Invoices Table */}
+      <NonPoTable invoices={invoices} />
+      
     </div>
   );
 }
