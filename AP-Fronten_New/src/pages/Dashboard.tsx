@@ -6,10 +6,12 @@ import RootCauseChart from "../components/charts/RootCauseChart";
 import OrdersTable from "../components/tables/OrdersTable";
 import VendorPerformanceTable from "../components/tables/VendorPerformanceTable";
 import NonPoPipeline from "../components/cards/NonPoPipeline";
+import NonPoDashboard from "./NonPoDashboard";
 import { supabase } from "../lib/supabase";
 import { FileText, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
 
 function Dashboard() {
+    const [activeTab, setActiveTab] = useState("Main Dashboard");
     const [invoices, setInvoices] = useState<any[]>([]);
     const [exceptions, setExceptions] = useState<any[]>([]);
     const [rootCauseData, setRootCauseData] = useState<any[]>([]);
@@ -193,9 +195,26 @@ function Dashboard() {
                 </p>
             </div>
 
-            <div className="dashboard-header-container">
-                <h1 className="dashboard-title">Dashboard Overview</h1>
+            <div className="dashboard-tabs">
+                <button 
+                  className={`dashboard-tab ${activeTab === 'Main Dashboard' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('Main Dashboard')}
+                >
+                  Main Dashboard
+                </button>
+                <button 
+                  className={`dashboard-tab ${activeTab === 'Non-PO View' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('Non-PO View')}
+                >
+                  Non-PO View
+                </button>
             </div>
+
+            {activeTab === 'Main Dashboard' ? (
+                <>
+                    <div className="dashboard-header-container">
+                        <h1 className="dashboard-title">Dashboard Overview</h1>
+                    </div>
 
             <NonPoPipeline 
                 pendingApprovalCount={nonPoPendingCount}
@@ -270,6 +289,10 @@ function Dashboard() {
 
                     <OrdersTable invoices={invoices} />
                 </>
+            )}
+                </>
+            ) : (
+                <NonPoDashboard invoices={invoices.filter(i => !i.po_reference)} />
             )}
 
         </div>
