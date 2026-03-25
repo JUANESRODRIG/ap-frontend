@@ -81,7 +81,7 @@ function NonPoDashboard({ invoices }: Props) {
         <div className="non-po-performance-header">
           <h3 className="non-po-performance-title">GL ASSIGNMENT AGENT PERFORMANCE — LAST 7 DAYS</h3>
         </div>
-        <div className="non-po-performance-metrics" style={{ justifyContent: "flex-start", gap: "60px" }}>
+        <div className="non-po-performance-metrics" style={{ justifyContent: "center", gap: "100px" }}>
           <div className="non-po-metric">
             <span className="non-po-metric-label">Average Confidence Score</span>
             <span className="non-po-metric-value success">91.3%</span>
