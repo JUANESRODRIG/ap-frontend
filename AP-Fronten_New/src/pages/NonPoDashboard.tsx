@@ -1,6 +1,6 @@
 import KPIBox from "../components/cards/KPIBox";
 import NonPoTable from "../components/tables/NonPoTable";
-import { FileText, Clock, Percent, AlertCircle } from "lucide-react";
+import { FileText, Clock, Percent, AlertCircle, TrendingUp, CheckCircle2, AlertTriangle, Activity, BarChart3, PieChart } from "lucide-react";
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart,
   BarChart, Bar, Cell
@@ -77,25 +77,40 @@ function NonPoDashboard({ invoices }: Props) {
         />
       </div>
 
-      <div className="non-po-performance-panel" style={{ borderTop: "4px solid #22c55e" }}>
+      <div className="non-po-performance-panel">
         <div className="non-po-performance-header">
-          <h3 className="non-po-performance-title">GL ASSIGNMENT AGENT PERFORMANCE — LAST 7 DAYS</h3>
+          <h3 className="non-po-performance-title">
+            <Activity color="var(--accent-primary)" size={18} />
+            GL ASSIGNMENT AGENT PERFORMANCE — LAST 7 DAYS
+          </h3>
         </div>
-        <div className="non-po-performance-metrics" style={{ justifyContent: "flex-start", gap: "60px" }}>
+        <div className="non-po-performance-metrics">
           <div className="non-po-metric">
-            <span className="non-po-metric-label">Average Confidence Score</span>
+            <span className="non-po-metric-label">
+              <TrendingUp size={14} />
+              Average Confidence Score
+            </span>
             <span className="non-po-metric-value success">91.3%</span>
           </div>
           <div className="non-po-metric">
-            <span className="non-po-metric-label">Invoices Processed</span>
-            <span className="non-po-metric-value" style={{ fontWeight: 500 }}>241</span>
+            <span className="non-po-metric-label">
+              <FileText size={14} />
+              Invoices Processed
+            </span>
+            <span className="non-po-metric-value">241</span>
           </div>
           <div className="non-po-metric">
-            <span className="non-po-metric-label">Auto-Approved</span>
-            <span className="non-po-metric-value" style={{ fontWeight: 500 }}>189</span>
+            <span className="non-po-metric-label">
+              <CheckCircle2 size={14} />
+              Auto-Approved
+            </span>
+            <span className="non-po-metric-value">189</span>
           </div>
           <div className="non-po-metric">
-            <span className="non-po-metric-label">Manual Review Required</span>
+            <span className="non-po-metric-label">
+              <AlertTriangle size={14} />
+              Manual Review Required
+            </span>
             <span className="non-po-metric-value warning">52</span>
           </div>
         </div>
@@ -103,7 +118,10 @@ function NonPoDashboard({ invoices }: Props) {
 
       <div className="non-po-bottom-grid">
         <div className="non-po-chart-panel">
-          <h4 className="non-po-chart-title">CONFIDENCE SCORE TREND</h4>
+          <h4 className="non-po-chart-title">
+            <TrendingUp size={16} color="var(--accent-blue)" />
+            CONFIDENCE SCORE TREND
+          </h4>
           <div style={{ flex: 1, width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={confidenceTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -124,7 +142,10 @@ function NonPoDashboard({ invoices }: Props) {
         </div>
 
         <div className="non-po-chart-panel">
-          <h4 className="non-po-chart-title">TOP GL CATEGORIES (BY VOLUME)</h4>
+          <h4 className="non-po-chart-title">
+            <BarChart3 size={16} color="#2e7d32" />
+            TOP GL CATEGORIES (BY VOLUME)
+          </h4>
           <div style={{ flex: 1, width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topCategoriesData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
@@ -143,7 +164,10 @@ function NonPoDashboard({ invoices }: Props) {
         </div>
 
         <div className="non-po-chart-panel">
-          <h4 className="non-po-chart-title">CONFIDENCE SCORE DISTRIBUTION</h4>
+          <h4 className="non-po-chart-title">
+            <PieChart size={16} color="var(--accent-primary)" />
+            CONFIDENCE SCORE DISTRIBUTION
+          </h4>
           <div style={{ flex: 1, width: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '20px' }}>
             {confidenceDistributionData.map((item, index) => (
               <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

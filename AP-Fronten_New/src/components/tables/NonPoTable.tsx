@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Filter } from "lucide-react";
+import { Filter, FileSpreadsheet } from "lucide-react";
 
 interface Invoice {
   invoice_id: number;
@@ -71,15 +71,15 @@ function NonPoTable({ invoices }: Props) {
 
   return (
     <div className="table-container animate-fade-in-up" style={{ 
-      background: "var(--bg-card)", 
-      border: "1px solid var(--border-subtle)",
-      borderRadius: "var(--radius-xl)",
       marginTop: "24px",
-      transition: "background var(--transition-base), border var(--transition-base)"
+      transition: "transform var(--transition-fast), box-shadow var(--transition-fast), border var(--transition-base)"
     }}>
-      <div className="table-header" style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className="table-header" style={{ padding: "0 0 20px 0", borderBottom: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div>
-          <h3 style={{ color: "var(--text-primary)", fontSize: "1.2rem", fontWeight: 700, marginBottom: "4px" }}>Non-PO Invoices - Detailed View</h3>
+          <h3 style={{ color: "var(--text-primary)", fontSize: "1.2rem", fontWeight: 700, marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <FileSpreadsheet size={20} color="var(--accent-primary)" />
+            Non-PO Invoices - Detailed View
+          </h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Review GL assignments and confidence scores for all Non-PO invoices</p>
         </div>
 
