@@ -1,9 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Info, Save, AlertTriangle, Shield, Tag, Building2, Clock } from 'lucide-react';
+import { X, CheckCircle2, Info, AlertTriangle, Shield, Tag, Building2, Clock } from 'lucide-react';
 import type { WebhookResponse, WebhookPendingApproval, WebhookNeedsReview } from '../types/invoice';
 import { isPendingApproval, isNeedsReview } from '../types/invoice';
-import { confirmInvoice } from '../services/invoiceService';
-import { useState } from 'react';
 import './InvoiceResultModal.css';
 
 interface InvoiceResultModalProps {
@@ -279,32 +277,10 @@ function NeedsReviewView({ data }: { data: WebhookNeedsReview }) {
    ══════════════════════════════════════════════ */
 
 const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) => {
-    const [isConfirming, setIsConfirming] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
     if (!isOpen || !data) return null;
 
     const isPending = isPendingApproval(data);
     const isReview = isNeedsReview(data);
-
-    const handleConfirm = async () => {
-        setIsConfirming(true);
-        setError(null);
-        try {
-            await confirmInvoice();
-            setIsSuccess(true);
-            setTimeout(() => {
-                onClose();
-                setIsSuccess(false);
-            }, 2000);
-        } catch (err) {
-            setError('Failed to confirm invoice. Please try again.');
-            console.error(err);
-        } finally {
-            setIsConfirming(false);
-        }
-    };
 
     return (
         <AnimatePresence>
@@ -326,42 +302,12 @@ const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) 
                     </div>
 
                     <div className="modal-footer">
-                        {isSuccess ? (
-                            <div className="success-message">
-                                <CheckCircle2 size={20} />
-                                <span>Invoice Saved Successfully!</span>
-                            </div>
-                        ) : (
-                            <>
-                                {error && <span className="error-text" style={{ color: 'var(--accent-red)', fontSize: '0.85rem', marginRight: 'auto' }}>{error}</span>}
-                                <button
-                                    className="btn-secondary"
-                                    onClick={onClose}
-                                    disabled={isConfirming}
-                                >
-                                    {isReview ? 'Close' : 'Cancel'}
-                                </button>
-                                {isPending && (
-                                    <button
-                                        className="btn-primary"
-                                        onClick={handleConfirm}
-                                        disabled={isConfirming}
-                                    >
-                                        {isConfirming ? (
-                                            <>
-                                                <div className="spinner"></div>
-                                                Confirming...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save size={18} />
-                                                Confirm & Save Invoice
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-                            </>
-                        )}
+                        <button
+                            className="btn-secondary"
+                            onClick={onClose}
+                        >
+                            Close
+                        </button>
                     </div>
                 </motion.div>
             </div>
