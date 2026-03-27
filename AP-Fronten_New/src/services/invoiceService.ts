@@ -1,25 +1,23 @@
-import type { N8NInvoiceResponse } from '../types/invoice';
+import type { WebhookResponse } from '../types/invoice';
 
 /**
  * Uploads one or more invoice files to the n8n webhook for extraction / processing.
  *
  * @param files - Array of File objects selected by the user.
- * @returns The parsed JSON response from the webhook.
+ * @returns The parsed and normalised webhook response.
  */
 export async function uploadInvoices(
     files: File[]
-): Promise<N8NInvoiceResponse[]> {
+): Promise<WebhookResponse> {
     const formData = new FormData();
 
-    // The webhook might expect 'file' or 'files'
     files.forEach((file) => {
         formData.append('file', file);
     });
 
-    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/invoices', {
+    const response = await fetch('https://n8n.sofiatechnology.ai/webhook-test/po', {
         method: 'POST',
         body: formData,
-
     });
 
     if (!response.ok) {
@@ -28,16 +26,26 @@ export async function uploadInvoices(
 
     const text = await response.text();
     if (!text) {
-        return [] as any; // Safe fallback for empty webhook responses
+        throw new Error('Empty response from webhook');
     }
 
     try {
-        return JSON.parse(text);
+        const parsed = JSON.parse(text);
+
+        // The webhook may wrap the response in an array — unwrap first element
+        const data = Array.isArray(parsed) ? parsed[0] : parsed;
+
+        if (!data) {
+            throw new Error('No usable data in webhook response');
+        }
+
+        return data as WebhookResponse;
     } catch (e) {
         console.error("Failed to parse response as JSON:", text);
-        return [] as any; // Fallback to avoid breaking the UI
+        throw new Error('Invalid JSON response from webhook');
     }
 }
+
 /**
  * Triggers the n8n webhook to confirm and save the invoice data.
  */
