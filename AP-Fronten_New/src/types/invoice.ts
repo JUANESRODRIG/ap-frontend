@@ -57,3 +57,69 @@ export interface N8NInvoiceResponse {
     vendor_id?: string;
     po_reference?: string;
 }
+
+/* ── New webhook response types ── */
+
+export interface WebhookVendor {
+    vendor_name: string;
+    vendor_found: boolean;
+    note?: string;
+}
+
+export interface WebhookAccounting {
+    category: string;
+    gl_account: string;
+    cost_center: string | null;
+}
+
+export interface WebhookClassification {
+    method: string;
+    confidence: number;
+}
+
+export interface WebhookAmount {
+    currency: string;
+    value: number;
+}
+
+export interface WebhookApproval {
+    level_1: string;
+    level_2: string;
+    level_3: string;
+}
+
+/** Response when the invoice is classified and sent for approval */
+export interface WebhookPendingApproval {
+    invoice_number: string;
+    status: 'pending_approval';
+    message: string;
+    vendor: WebhookVendor;
+    accounting: WebhookAccounting;
+    classification: WebhookClassification;
+    amount: WebhookAmount;
+    approval: WebhookApproval;
+}
+
+/** Response when the invoice needs manual review (low confidence) */
+export interface WebhookNeedsReview {
+    vendor_found: boolean;
+    category_found: boolean;
+    gl_account: string | null;
+    method: string;
+    reason: string;
+    confidence: number | string;
+    status: 'needs_review';
+    review_required: boolean;
+}
+
+/** Discriminated union for all new webhook responses */
+export type WebhookResponse = WebhookPendingApproval | WebhookNeedsReview;
+
+/** Helper to check which response type we got */
+export function isPendingApproval(r: WebhookResponse): r is WebhookPendingApproval {
+    return r.status === 'pending_approval';
+}
+
+export function isNeedsReview(r: WebhookResponse): r is WebhookNeedsReview {
+    return r.status === 'needs_review';
+}

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, FileText, Info, Save, AlertTriangle } from 'lucide-react';
-import type { N8NInvoiceResponse } from '../types/invoice';
+import { X, CheckCircle2, Info, Save, AlertTriangle, Shield, Tag, Building2, Clock } from 'lucide-react';
+import type { WebhookResponse, WebhookPendingApproval, WebhookNeedsReview } from '../types/invoice';
+import { isPendingApproval, isNeedsReview } from '../types/invoice';
 import { confirmInvoice } from '../services/invoiceService';
 import { useState } from 'react';
 import './InvoiceResultModal.css';
@@ -8,8 +9,274 @@ import './InvoiceResultModal.css';
 interface InvoiceResultModalProps {
     isOpen: boolean;
     onClose: () => void;
-    data: N8NInvoiceResponse | null;
+    data: WebhookResponse | null;
 }
+
+/* ── Confidence helpers ── */
+
+function confidencePercent(val: number | string): number {
+    const n = typeof val === 'string' ? parseFloat(val) : val;
+    if (isNaN(n)) return 0;
+    return n <= 1 ? Math.round(n * 100) : Math.round(n);
+}
+
+function confidenceLevel(pct: number): 'high' | 'medium' | 'low' {
+    if (pct >= 85) return 'high';
+    if (pct >= 60) return 'medium';
+    return 'low';
+}
+
+function confidenceColor(level: 'high' | 'medium' | 'low') {
+    return level === 'high' ? '#10b981' : level === 'medium' ? '#f59e0b' : '#ef4444';
+}
+
+/* ── Approval level label ── */
+function approvalLabel(val: string) {
+    if (val === 'approved') return 'Approved';
+    if (val === 'rejected') return 'Rejected';
+    return 'Pending';
+}
+
+function approvalIcon(val: string) {
+    if (val === 'approved') return <CheckCircle2 size={16} color="#10b981" />;
+    if (val === 'rejected') return <AlertTriangle size={16} color="#ef4444" />;
+    return <Clock size={16} color="#f59e0b" />;
+}
+
+/* ══════════════════════════════════════════════
+   Pending Approval View
+   ══════════════════════════════════════════════ */
+
+function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
+    const confPct = confidencePercent(data.classification.confidence);
+    const confLvl = confidenceLevel(confPct);
+    const confClr = confidenceColor(confLvl);
+
+    return (
+        <>
+            {/* Header */}
+            <div className="result-header">
+                <div className="status-icon-success">
+                    <CheckCircle2 size={32} color="#10b981" />
+                </div>
+                <h2>Invoice Classified</h2>
+                <p className="result-subtitle">Pending 3-level approval</p>
+            </div>
+
+            {/* Message */}
+            {data.message && (
+                <div className="clarification-notice" style={{ backgroundColor: '#ecfdf5', color: '#065f46', borderLeft: '4px solid #10b981' }}>
+                    <Info size={18} color="#10b981" />
+                    <p>{data.message}</p>
+                </div>
+            )}
+
+            {/* Invoice & Amount */}
+            <div className="result-info-grid">
+                <div className="info-card">
+                    <span className="label">Invoice #</span>
+                    <span className="value">{data.invoice_number}</span>
+                </div>
+                <div className="info-card">
+                    <span className="label">Amount</span>
+                    <span className="value">{data.amount.currency} {data.amount.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+            </div>
+
+            {/* Vendor Info */}
+            <div className="suggestion-details">
+                <div className="result-section-title">
+                    <Building2 size={14} style={{ marginRight: 8 }} />
+                    Vendor Information
+                </div>
+                <div className="suggestion-card">
+                    <div className="suggestion-field">
+                        <span className="label">Vendor Name</span>
+                        <span className="value">{data.vendor.vendor_name}</span>
+                    </div>
+                    <div className="suggestion-field">
+                        <span className="label">Status</span>
+                        <span className={`value category-badge ${data.vendor.vendor_found ? 'badge-green' : 'badge-orange'}`}>
+                            {data.vendor.vendor_found ? 'Found in DB' : 'Not Found'}
+                        </span>
+                    </div>
+                    {data.vendor.note && !data.vendor.vendor_found && (
+                        <div className="suggestion-field full-width">
+                            <div className="vendor-warning">
+                                <AlertTriangle size={14} color="#f59e0b" />
+                                <span>{data.vendor.note}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Accounting */}
+            <div className="suggestion-details">
+                <div className="result-section-title">
+                    <Tag size={14} style={{ marginRight: 8 }} />
+                    Accounting Assignment
+                </div>
+                <div className="suggestion-card">
+                    <div className="suggestion-field">
+                        <span className="label">Category</span>
+                        <span className="value category-badge">{data.accounting.category}</span>
+                    </div>
+                    <div className="suggestion-field">
+                        <span className="label">GL Account</span>
+                        <span className="value" style={{ fontFamily: 'monospace', fontWeight: 700 }}>{data.accounting.gl_account}</span>
+                    </div>
+                    {data.accounting.cost_center && data.accounting.cost_center !== 'null' && (
+                        <div className="suggestion-field">
+                            <span className="label">Cost Center</span>
+                            <span className="value">{data.accounting.cost_center}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Classification & Confidence */}
+            <div className="suggestion-details">
+                <div className="result-section-title">
+                    <Info size={14} style={{ marginRight: 8 }} />
+                    Classification
+                </div>
+                <div className="suggestion-card">
+                    <div className="suggestion-field">
+                        <span className="label">Method</span>
+                        <span className="value" style={{ textTransform: 'capitalize' }}>{data.classification.method.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div className="suggestion-field">
+                        <span className="label">Confidence</span>
+                        <div className="confidence-bar-container">
+                            <div className="confidence-bar-track">
+                                <div
+                                    className="confidence-bar-fill"
+                                    style={{ width: `${confPct}%`, backgroundColor: confClr }}
+                                />
+                            </div>
+                            <span className="confidence-bar-label" style={{ color: confClr }}>{confPct}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Approval Tracker */}
+            <div className="suggestion-details">
+                <div className="result-section-title">
+                    <Shield size={14} style={{ marginRight: 8 }} />
+                    Approval Status
+                </div>
+                <div className="approval-tracker">
+                    {(['level_1', 'level_2', 'level_3'] as const).map((key, i) => {
+                        const val = data.approval[key];
+                        return (
+                            <div key={key} className={`approval-step ${val}`}>
+                                <div className="approval-step-icon">{approvalIcon(val)}</div>
+                                <div className="approval-step-info">
+                                    <span className="approval-step-title">Level {i + 1}</span>
+                                    <span className={`approval-step-status status-${val}`}>{approvalLabel(val)}</span>
+                                </div>
+                                {i < 2 && <div className={`approval-connector ${val === 'approved' ? 'active' : ''}`} />}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </>
+    );
+}
+
+/* ══════════════════════════════════════════════
+   Needs Review View
+   ══════════════════════════════════════════════ */
+
+function NeedsReviewView({ data }: { data: WebhookNeedsReview }) {
+    const confPct = confidencePercent(data.confidence);
+    const confLvl = confidenceLevel(confPct);
+    const confClr = confidenceColor(confLvl);
+
+    return (
+        <>
+            {/* Header */}
+            <div className="result-header">
+                <div className="status-icon-success" style={{ backgroundColor: '#fef3c7' }}>
+                    <AlertTriangle size={32} color="#f59e0b" />
+                </div>
+                <h2>Manual Review Required</h2>
+                <p className="result-subtitle">Low confidence — please review before processing</p>
+            </div>
+
+            {/* Warning notice */}
+            <div className="clarification-notice" style={{ backgroundColor: '#fffbeb', color: '#92400e', borderLeft: '4px solid #f59e0b' }}>
+                <AlertTriangle size={18} color="#f59e0b" />
+                <p>The AI classification confidence is too low for automatic processing. A manual review is required to assign the correct GL category.</p>
+            </div>
+
+            {/* Details grid */}
+            <div className="result-info-grid">
+                <div className="info-card">
+                    <span className="label">Vendor Found</span>
+                    <span className={`value category-badge ${data.vendor_found ? 'badge-green' : 'badge-red'}`}>
+                        {data.vendor_found ? 'Yes' : 'No'}
+                    </span>
+                </div>
+                <div className="info-card">
+                    <span className="label">Category Found</span>
+                    <span className={`value category-badge ${data.category_found ? 'badge-green' : 'badge-red'}`}>
+                        {data.category_found ? 'Yes' : 'No'}
+                    </span>
+                </div>
+                <div className="info-card">
+                    <span className="label">GL Account</span>
+                    <span className="value" style={{ fontFamily: 'monospace', fontWeight: 700 }}>{data.gl_account || '—'}</span>
+                </div>
+                <div className="info-card">
+                    <span className="label">Method</span>
+                    <span className="value" style={{ textTransform: 'capitalize' }}>{data.method.replace(/_/g, ' ')}</span>
+                </div>
+            </div>
+
+            {/* Confidence bar */}
+            <div className="suggestion-details">
+                <div className="result-section-title">
+                    <Info size={14} style={{ marginRight: 8 }} />
+                    Confidence Score
+                </div>
+                <div className="suggestion-card" style={{ gridTemplateColumns: '1fr' }}>
+                    <div className="suggestion-field">
+                        <div className="confidence-bar-container" style={{ width: '100%' }}>
+                            <div className="confidence-bar-track" style={{ flex: 1 }}>
+                                <div
+                                    className="confidence-bar-fill"
+                                    style={{ width: `${confPct}%`, backgroundColor: confClr }}
+                                />
+                            </div>
+                            <span className="confidence-bar-label" style={{ color: confClr }}>{confPct}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Reason */}
+            {data.reason && (
+                <div className="suggestion-details">
+                    <div className="result-section-title">
+                        <Info size={14} style={{ marginRight: 8 }} />
+                        Reason
+                    </div>
+                    <pre className="result-message" style={{ borderLeftColor: '#f59e0b' }}>
+                        {data.reason}
+                    </pre>
+                </div>
+            )}
+        </>
+    );
+}
+
+/* ══════════════════════════════════════════════
+   Main Modal Component
+   ══════════════════════════════════════════════ */
 
 const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) => {
     const [isConfirming, setIsConfirming] = useState(false);
@@ -18,55 +285,8 @@ const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) 
 
     if (!isOpen || !data) return null;
 
-    const { 
-        message, 
-        invoice, 
-        suggested_category, 
-        reason, 
-        confidence, 
-        vendor_name, 
-        invoice_number, 
-        invoice_date, 
-        currency, 
-        invoice_total,
-        no_po_no_match,
-        owner_name,
-        match_status,
-        issues,
-        summary
-    } = data;
-    
-    const isSuggested = no_po_no_match === true || !!suggested_category;
-    const isMatched = match_status === 'Matched';
-    const isException = match_status === 'Exception';
-
-    // Normalize data for display
-    const displayInvoice = isSuggested ? {
-        invoice_number: invoice_number || invoice?.invoice_number || 'N/A',
-        vendor_name: vendor_name || invoice?.vendor_name || 'N/A',
-        invoice_date: invoice_date || invoice?.invoice_date || 'N/A',
-        po_reference: invoice?.po_reference || 'N/A',
-        currency: currency || invoice?.currency || 'USD',
-        invoice_total: typeof invoice_total === 'string' ? parseFloat(invoice_total) : (invoice_total || invoice?.invoice_total || 0),
-        subtotal: invoice?.subtotal || null,
-        tax_amount: invoice?.tax_amount || null,
-        payment_terms: invoice?.payment_terms || null,
-        line_items: invoice?.line_items || [],
-        suggested_category: suggested_category || (invoice as any)?.suggested_category,
-        reason: reason || (invoice as any)?.reason,
-        confidence: confidence || (invoice as any)?.confidence
-    } : (invoice || {
-        invoice_number: invoice_number || 'N/A',
-        vendor_name: vendor_name || data.vendor_id || 'N/A',
-        invoice_date: invoice_date || 'N/A',
-        po_reference: data.po_reference || 'N/A',
-        currency: currency || 'USD',
-        invoice_total: typeof invoice_total === 'string' ? parseFloat(invoice_total) : (invoice_total || 0),
-        subtotal: null,
-        tax_amount: null,
-        payment_terms: null,
-        line_items: []
-    } as any);
+    const isPending = isPendingApproval(data);
+    const isReview = isNeedsReview(data);
 
     const handleConfirm = async () => {
         setIsConfirming(true);
@@ -101,175 +321,8 @@ const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) 
                     </button>
 
                     <div className="modal-body">
-                        <div className="result-header">
-                            <div className={`status-icon-${isException ? 'error' : 'success'}`} style={isException ? { backgroundColor: '#fee2e2' } : {}}>
-                                {isException ? <AlertTriangle size={32} color="#ef4444" /> : <CheckCircle2 size={32} color="#10b981" />}
-                            </div>
-                            <h2>{isException ? 'Invoice Exception' : isMatched ? 'Invoice Matched' : isSuggested ? 'Suggested Classification' : 'Extraction Successful'}</h2>
-                        </div>
-
-                        {isSuggested && (
-                            <div className="clarification-notice">
-                                <Info size={18} />
-                                <p>No Purchase Order or Vendor found. Based on the invoice content, we've suggested the following category.</p>
-                            </div>
-                        )}
-                        
-                        {isMatched && (
-                            <div className="clarification-notice" style={{ backgroundColor: '#ecfdf5', color: '#065f46', borderLeft: '4px solid #10b981' }}>
-                                <CheckCircle2 size={18} color="#10b981" />
-                                <p>This invoice perfectly matches the associated purchase order and goods receipt. Ready for approval.</p>
-                            </div>
-                        )}
-
-                        {isException && (
-                            <div className="clarification-notice" style={{ backgroundColor: '#fef2f2', color: '#991b1b', borderLeft: '4px solid #ef4444' }}>
-                                <AlertTriangle size={18} color="#ef4444" />
-                                <p>This invoice has discrepancies with the purchase order or goods receipt and requires manual review.</p>
-                            </div>
-                        )}
-
-                        <div className="result-info-grid">
-                            <div className="info-card">
-                                <span className="label">Invoice #</span>
-                                <span className="value">{displayInvoice.invoice_number || 'N/A'}</span>
-                            </div>
-                            <div className="info-card">
-                                <span className="label">Vendor ID/Name</span>
-                                <span className="value">{displayInvoice.vendor_name || data.vendor_id || 'N/A'}</span>
-                            </div>
-                            {(isMatched || isException) && owner_name && (
-                                <div className="info-card">
-                                    <span className="label">Owner</span>
-                                    <span className="value">{owner_name}</span>
-                                </div>
-                            )}
-                            <div className="info-card">
-                                <span className="label">PO Ref</span>
-                                <span className="value">{displayInvoice.po_reference || data.po_reference || 'N/A'}</span>
-                            </div>
-                            {(!isMatched && !isException) && (
-                                <div className="info-card">
-                                    <span className="label">Date</span>
-                                    <span className="value">{displayInvoice.invoice_date || 'N/A'}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {(isMatched || isException) && (
-                            <div className="suggestion-details">
-                                <div className="result-section-title">
-                                    {isMatched ? (
-                                        <CheckCircle2 size={14} style={{ marginRight: 8, display: 'inline', color: '#10b981' }} />
-                                    ) : (
-                                        <AlertTriangle size={14} style={{ marginRight: 8, display: 'inline', color: '#ef4444' }} />
-                                    )}
-                                    Matching Results
-                                </div>
-                                <div className="suggestion-card" style={{ 
-                                    borderColor: isMatched ? '#a7f3d0' : '#fecaca', 
-                                    backgroundColor: isMatched ? '#f0fdf4' : '#fef2f2' 
-                                }}>
-                                    <div className="suggestion-field">
-                                        <span className="label">Status</span>
-                                        <span className="value category-badge" style={{ 
-                                            backgroundColor: isMatched ? '#d1fae5' : '#fee2e2', 
-                                            color: isMatched ? '#065f46' : '#991b1b' 
-                                        }}>
-                                            {match_status}
-                                        </span>
-                                    </div>
-                                    <div className="suggestion-field full-width">
-                                        <span className="label">Issues</span>
-                                        {issues ? (
-                                            <div 
-                                                className="value reason-text" 
-                                                style={{ color: isMatched ? '#059669' : '#b91c1c', fontWeight: 500, lineHeight: 1.6 }}
-                                                dangerouslySetInnerHTML={{ __html: issues }}
-                                            />
-                                        ) : (
-                                            <span className="value" style={{ color: isMatched ? '#059669' : '#b91c1c', fontWeight: 500 }}>
-                                                None
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="suggestion-field full-width">
-                                        <span className="label">Summary</span>
-                                        <p className="reason-text" style={{ color: isMatched ? '#064e3b' : '#7f1d1d' }}>{summary}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {isSuggested && (
-                            <div className="suggestion-details">
-                                <div className="result-section-title">
-                                    <Info size={14} style={{ marginRight: 8, display: 'inline' }} />
-                                    Suggested Classification
-                                </div>
-                                <div className="suggestion-card">
-                                    <div className="suggestion-field">
-                                        <span className="label">Suggested Category</span>
-                                        <span className="value category-badge">{displayInvoice.suggested_category}</span>
-                                    </div>
-                                    <div className="suggestion-field">
-                                        <span className="label">Confidence</span>
-                                        <span className={`value confidence-badge ${displayInvoice.confidence?.toLowerCase()}`}>
-                                            {displayInvoice.confidence}
-                                        </span>
-                                    </div>
-                                    <div className="suggestion-field full-width">
-                                        <span className="label">Reasoning</span>
-                                        <p className="reason-text">{displayInvoice.reason}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {message && (
-                            <>
-                                <div className="result-section-title">
-                                    <Info size={14} style={{ marginRight: 8, display: 'inline' }} />
-                                    Agent Summary
-                                </div>
-                                <pre className="result-message">
-                                    {message}
-                                </pre>
-                            </>
-                        )}
-
-                        {displayInvoice.line_items && displayInvoice.line_items.length > 0 && (
-                            <>
-                                <div className="result-section-title">
-                                    <FileText size={14} style={{ marginRight: 8, display: 'inline' }} />
-                                    Line Items
-                                </div>
-                                <div className="line-items-container">
-                                    <table className="line-items-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Description</th>
-                                                <th>Qty</th>
-                                                <th>Price</th>
-                                                <th>Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {displayInvoice.line_items.map((item: any, idx: number) => (
-                                                <tr key={idx}>
-                                                    <td>{item.description}</td>
-                                                    <td>{item.quantity}</td>
-                                                    <td>{item.unit_price}</td>
-                                                    <td className="item-total">
-                                                        {displayInvoice.currency} {item.line_total}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </>
-                        )}
+                        {isPending && <PendingApprovalView data={data} />}
+                        {isReview && <NeedsReviewView data={data} />}
                     </div>
 
                     <div className="modal-footer">
@@ -281,30 +334,32 @@ const InvoiceResultModal = ({ isOpen, onClose, data }: InvoiceResultModalProps) 
                         ) : (
                             <>
                                 {error && <span className="error-text" style={{ color: 'var(--accent-red)', fontSize: '0.85rem', marginRight: 'auto' }}>{error}</span>}
-                                <button 
-                                    className="btn-secondary" 
+                                <button
+                                    className="btn-secondary"
                                     onClick={onClose}
                                     disabled={isConfirming}
                                 >
-                                    Cancel
+                                    {isReview ? 'Close' : 'Cancel'}
                                 </button>
-                                <button 
-                                    className="btn-primary" 
-                                    onClick={handleConfirm}
-                                    disabled={isConfirming}
-                                >
-                                    {isConfirming ? (
-                                        <>
-                                            <div className="spinner"></div>
-                                            Confirming...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={18} />
-                                            Confirm & Save Invoice
-                                        </>
-                                    )}
-                                </button>
+                                {isPending && (
+                                    <button
+                                        className="btn-primary"
+                                        onClick={handleConfirm}
+                                        disabled={isConfirming}
+                                    >
+                                        {isConfirming ? (
+                                            <>
+                                                <div className="spinner"></div>
+                                                Confirming...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save size={18} />
+                                                Confirm & Save Invoice
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                             </>
                         )}
                     </div>

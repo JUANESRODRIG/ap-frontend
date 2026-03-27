@@ -2,14 +2,14 @@ import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 
 import { CloudUpload, Upload } from "lucide-react";
 import "./UploadInvoice.css";
 import { uploadInvoices } from "../services/invoiceService";
-import type { N8NInvoiceResponse } from "../types/invoice";
+import type { WebhookResponse } from "../types/invoice";
 import InvoiceResultModal from "./InvoiceResultModal";
 
 function UploadInvoice() {
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [result, setResult] = useState<N8NInvoiceResponse | null>(null);
+    const [result, setResult] = useState<WebhookResponse | null>(null);
     const [showResult, setShowResult] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,7 +29,7 @@ function UploadInvoice() {
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const droppedFile = e.dataTransfer.files[0];
             setFile(droppedFile);
-            upload(droppedFile); // automatically upload on drop
+            upload(droppedFile);
         }
     };
 
@@ -37,7 +37,7 @@ function UploadInvoice() {
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
-            upload(selectedFile); // automatically upload on selection
+            upload(selectedFile);
         }
     };
 
@@ -50,31 +50,16 @@ function UploadInvoice() {
         try {
             const responseData = await uploadInvoices([selectedFile]);
             console.log("Webhook Response:", responseData);
-
-            if (responseData) {
-                // Handle empty arrays returned by fallback
-                if (Array.isArray(responseData)) {
-                    if (responseData.length > 0) {
-                        setResult(responseData[0]);
-                        setShowResult(true);
-                    } else {
-                        // Empty response (e.g no JSON from webhook)
-                        throw new Error("No usable data received from the webhook response.");
-                    }
-                } else if (!Array.isArray(responseData)) {
-                    setResult(responseData as any);
-                    setShowResult(true);
-                }
-            }
-
-            setFile(null); // Reset state to show clean dropzone again
+            setResult(responseData);
+            setShowResult(true);
+            setFile(null);
         } catch (error) {
             console.error(error);
             setFile(null);
         } finally {
             setUploading(false);
         }
-    }, [uploadInvoices]);
+    }, []);
 
     return (
         <div className="upload-page">
