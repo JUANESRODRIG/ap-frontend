@@ -1,13 +1,15 @@
-import type { WebhookResponse } from '../types/invoice';
+import type { WebhookResponse, Company } from '../types/invoice';
 
 /**
  * Uploads one or more invoice files to the n8n webhook for extraction / processing.
  *
  * @param files - Array of File objects selected by the user.
+ * @param company - The selected company object.
  * @returns The parsed and normalised webhook response.
  */
 export async function uploadInvoices(
-    files: File[]
+    files: File[],
+    company: Company
 ): Promise<WebhookResponse> {
     const formData = new FormData();
 
@@ -15,7 +17,12 @@ export async function uploadInvoices(
         formData.append('file', file);
     });
 
-    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/po', {
+    formData.append('company_code', company.company_code);
+    formData.append('company_name', company.company_name);
+    formData.append('description', company.Description || '');
+    formData.append('area', company.Area || '');
+
+    const response = await fetch('https://n8n.sofiatechnology.ai/webhook-test/po', {
         method: 'POST',
         body: formData,
     });
