@@ -345,6 +345,16 @@
     color: #ef4444;
 }
 
+.category-badge.badge-blue {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+}
+
+.category-badge.badge-purple {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+}
+
 .confidence-badge {
     padding: 4px 10px;
     border-radius: 6px;

@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from "react";
+import { useState, useRef, useCallback, useEffect, type DragEvent, type ChangeEvent } from "react";
 import { CloudUpload, Upload } from "lucide-react";
 import "./UploadInvoice.css";
 import { uploadInvoices } from "../services/invoiceService";
-import type { WebhookResponse } from "../types/invoice";
+import type { WebhookResponse, Company } from "../types/invoice";
 import InvoiceResultModal from "./InvoiceResultModal";
+import { supabase } from "../lib/supabase";
 
 function UploadInvoice() {
     const [file, setFile] = useState<File | null>(null);
@@ -11,7 +12,25 @@ function UploadInvoice() {
     const [isDragging, setIsDragging] = useState(false);
     const [result, setResult] = useState<WebhookResponse | null>(null);
     const [showResult, setShowResult] = useState(false);
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const fetchCompanies = async () => {
+            const { data, error } = await supabase
+                .from("companies")
+                .select("company_code, company_name, Description, Area");
+
+            if (error) {
+                console.error("Error fetching companies:", error);
+            } else if (data) {
+                setCompanies(data);
+            }
+        };
+
+        fetchCompanies();
+    }, []);
 
     const handleDragOver = (e: DragEvent) => {
         e.preventDefault();
@@ -26,6 +45,12 @@ function UploadInvoice() {
     const handleDrop = (e: DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
+
+        if (!selectedCompany) {
+            alert("Please select a company before uploading.");
+            return;
+        }
+
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const droppedFile = e.dataTransfer.files[0];
             setFile(droppedFile);
@@ -34,6 +59,12 @@ function UploadInvoice() {
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (!selectedCompany) {
+            alert("Please select a company before uploading.");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
@@ -48,7 +79,7 @@ function UploadInvoice() {
         setResult(null);
 
         try {
-            const responseData = await uploadInvoices([selectedFile]);
+            const responseData = await uploadInvoices([selectedFile], selectedCompany!);
             console.log("Webhook Response:", responseData);
             setResult(responseData);
             setShowResult(true);
@@ -59,7 +90,7 @@ function UploadInvoice() {
         } finally {
             setUploading(false);
         }
-    }, []);
+    }, [selectedCompany]);
 
     return (
         <div className="upload-page">
@@ -68,6 +99,26 @@ function UploadInvoice() {
                 <p className="upload-subtitle">
                     Drag and drop your invoice files or click to browse. We support PDF, PNG, JPG, and Excel formats.
                 </p>
+
+                <div className="company-selection-container">
+                    <label htmlFor="company-select" className="company-select-label">Company</label>
+                    <select
+                        id="company-select"
+                        className="company-select"
+                        value={selectedCompany?.company_code || ""}
+                        onChange={(e) => {
+                            const company = companies.find(c => c.company_code === e.target.value);
+                            setSelectedCompany(company || null);
+                        }}
+                    >
+                        <option value="" disabled>Select a company...</option>
+                        {companies.map((company) => (
+                            <option key={company.company_code} value={company.company_code}>
+                                {company.company_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             <div
@@ -95,9 +146,13 @@ function UploadInvoice() {
 
                 <button
                     className="upload-btn"
-                    disabled={uploading}
+                    disabled={uploading || !selectedCompany}
                     onClick={(e) => {
                         e.stopPropagation();
+                        if (!selectedCompany) {
+                            alert("Please select a company first.");
+                            return;
+                        }
                         fileInputRef.current?.click();
                     }}
                 >

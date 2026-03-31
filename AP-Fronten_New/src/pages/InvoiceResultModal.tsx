@@ -109,7 +109,7 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                 </div>
             </div>
 
-            {/* Accounting */}
+            {/* Accounting & Categorization */}
             <div className="suggestion-details">
                 <div className="result-section-title">
                     <Tag size={14} style={{ marginRight: 8 }} />
@@ -129,6 +129,24 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                             <span className="label">Cost Center</span>
                             <span className="value">{data.accounting.cost_center}</span>
                         </div>
+                    )}
+                    
+                    {/* New Categorization Fields */}
+                    {data.categorize && (
+                        <>
+                            <div className="suggestion-field">
+                                <span className="label">Type</span>
+                                <span className={`value category-badge ${data.categorize.type?.toLowerCase().includes('capex') ? 'badge-blue' : 'badge-purple'}`}>
+                                    {data.categorize.type || '—'}
+                                </span>
+                            </div>
+                            <div className="suggestion-field">
+                                <span className="label">Cost Type</span>
+                                <span className={`value category-badge ${data.categorize.cost_type?.toLowerCase().includes('direct') ? 'badge-green' : 'badge-orange'}`}>
+                                    {data.categorize.cost_type || '—'}
+                                </span>
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
