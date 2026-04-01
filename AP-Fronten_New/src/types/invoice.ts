@@ -88,6 +88,11 @@ export interface WebhookApproval {
     level_3: string;
 }
 
+export interface WebhookCategorize {
+    type: string;
+    cost_type: string;
+}
+
 /** Response when the invoice is classified and sent for approval */
 export interface WebhookPendingApproval {
     invoice_number: string;
@@ -98,6 +103,7 @@ export interface WebhookPendingApproval {
     classification: WebhookClassification;
     amount: WebhookAmount;
     approval: WebhookApproval;
+    categorize?: WebhookCategorize;
 }
 
 /** Response when the invoice needs manual review (low confidence) */
@@ -110,6 +116,13 @@ export interface WebhookNeedsReview {
     confidence: number | string;
     status: 'needs_review';
     review_required: boolean;
+}
+
+export interface Company {
+    company_code: string;
+    company_name: string;
+    Description: string | null;
+    Area: string | null;
 }
 
 /** Discriminated union for all new webhook responses */
