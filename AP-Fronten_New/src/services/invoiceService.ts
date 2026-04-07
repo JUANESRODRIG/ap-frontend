@@ -22,7 +22,7 @@ export async function uploadInvoices(
     formData.append('description', company.Description || '');
     formData.append('area', company.Area || '');
 
-    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/po', {
+    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/latam', {
         method: 'POST',
         body: formData,
     });

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import KPIBox from "../components/cards/KPIBox";
 import NonPoTable from "../components/tables/NonPoTable";
 import { FileText, Clock, Percent, AlertCircle, TrendingUp, CheckCircle2, AlertTriangle, Activity, BarChart3, PieChart } from "lucide-react";
@@ -6,39 +7,152 @@ import {
   BarChart, Bar, Cell
 } from "recharts";
 
-// Mock data for the charts
-const confidenceTrendData = [
-  { name: '09/01', value: 87 },
-  { name: '09/02', value: 91 },
-  { name: '09/03', value: 88 },
-  { name: '09/04', value: 92 },
-  { name: '09/05', value: 90 },
-  { name: '09/06', value: 93 },
-  { name: '09/07', value: 91 },
-];
-
-const topCategoriesData = [
-  { name: 'Utilities', value: 80, color: '#2e7d32' },
-  { name: 'Professional Services', value: 45, color: '#2e7d32' },
-  { name: 'Tax / Government', value: 35, color: '#2e7d32' },
-  { name: 'Subscriptions', value: 58, color: '#2e7d32' },
-  { name: 'Meals & Entertainment', value: 30, color: '#2e7d32' },
-  { name: 'Office Supplies', value: 25, color: '#2e7d32' },
-  { name: 'Marketing', value: 18, color: '#2e7d32' },
-];
-
-const confidenceDistributionData = [
-  { name: '95-100%', value: 89, max: 100 },
-  { name: '85-94%', value: 67, max: 100 },
-  { name: '75-84%', value: 45, max: 100 },
-  { name: '65-74%', value: 12, max: 100 },
-];
-
 interface Props {
   invoices: any[];
 }
 
 function NonPoDashboard({ invoices }: Props) {
+
+  // Dynamic calculations from real invoices dataset
+  const {
+    totalInvoices,
+    pendingGL,
+    highConfidencePct,
+    avgConfidenceScore,
+    autoApprovedCount,
+    manualReviewCount,
+    confidenceTrendData,
+    topCategoriesData,
+    confidenceDistributionData
+  } = useMemo(() => {
+    
+    // Safety check
+    const validInvoices = Array.isArray(invoices) ? invoices : [];
+    
+    const total = validInvoices.length;
+
+    let totalConfidence = 0;
+    let confidenceCount = 0;
+    let highConfCount = 0;
+
+    let pendingCount = 0;
+    let autoApprove = 0;
+    let manualReview = 0;
+
+    const categoryCounts: Record<string, number> = {};
+    
+    // Confidence buckets
+    let conf95_100 = 0;
+    let conf85_94 = 0;
+    let conf75_84 = 0;
+    let confLow = 0;
+
+    // Trend grouping by date
+    const trendMap: Record<string, { sum: number, count: number }> = {};
+
+    validInvoices.forEach(inv => {
+      // Pending GL
+      const status = (inv.status || "").toLowerCase();
+      if (status.includes("needs_review") || status.includes("parked") || status.includes("processing") || status.includes("manual")) {
+        pendingCount++;
+      }
+      
+      if (status === "approved" || status === "clean") {
+        autoApprove++;
+      } else if (status === "exception" || status === "rejected" || status === "needs_review") {
+        manualReview++;
+      }
+
+      // Confidence
+      const rawConf = inv.Confidence !== undefined ? inv.Confidence : inv.confidence;
+      let confVal = parseFloat(rawConf || "0");
+      if (!isNaN(confVal) && rawConf != null) {
+        // If confidence is a decimal <= 1, multiply by 100
+        if (confVal <= 1) {
+          confVal = confVal * 100;
+        }
+        
+        totalConfidence += confVal;
+        confidenceCount++;
+        
+        if (confVal >= 90) highConfCount++;
+
+        // Buckets
+        if (confVal >= 95) conf95_100++;
+        else if (confVal >= 85) conf85_94++;
+        else if (confVal >= 75) conf75_84++;
+        else confLow++;
+      }
+
+      // Category
+      const cat = inv.category || inv.suggested_category || "Uncategorized";
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+
+      const dateStr = inv.invoice_date || inv.created_at;
+      if (dateStr && !isNaN(confVal) && rawConf != null) {
+        try {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) {
+            const dayStr = `${String(d.getMonth()+1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+            if (!trendMap[dayStr]) trendMap[dayStr] = { sum: 0, count: 0 };
+            trendMap[dayStr].sum += confVal;
+            trendMap[dayStr].count += 1;
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+      }
+    });
+
+    const avgConf = confidenceCount > 0 ? (totalConfidence / confidenceCount) : 0;
+    const highConfPct = confidenceCount > 0 ? Math.round((highConfCount / confidenceCount) * 100) : 0;
+
+    // Build trend data, sort by date string
+    let parsedTrend = Object.keys(trendMap)
+      .sort((a,b) => a.localeCompare(b))
+      .map(date => ({
+        name: date,
+        value: Math.round(trendMap[date].sum / trendMap[date].count)
+      }));
+    
+    // If we map 0 dates, supply mock
+    if (parsedTrend.length === 0) {
+      parsedTrend = [
+        { name: '09/01', value: 87 },
+        { name: '09/02', value: 91 },
+      ];
+    } else if (parsedTrend.length < 5) {
+      // pad slightly so chart doesn't look empty
+      parsedTrend.unshift({ name: 'Start', value: avgConf });
+    }
+
+    // Top categories (sort and pick top 7)
+    const sortedCats = Object.keys(categoryCounts)
+      .map(k => ({ name: k, value: categoryCounts[k], color: '#2e7d32' }))
+      .sort((a,b) => b.value - a.value)
+      .slice(0, 7);
+
+    const maxConfBucket = Math.max(conf95_100, conf85_94, conf75_84, confLow) || 1; // avoid divide by zero
+
+    return {
+      totalInvoices: total,
+      pendingGL: pendingCount,
+      highConfidencePct: highConfPct,
+      avgConfidenceScore: avgConf.toFixed(1),
+      autoApprovedCount: autoApprove,
+      manualReviewCount: manualReview,
+      
+      confidenceTrendData: parsedTrend,
+      topCategoriesData: sortedCats.length > 0 ? sortedCats : [{ name: 'No Data', value: 0, color: '#2e7d32' }],
+      confidenceDistributionData: [
+        { name: '95-100%', value: conf95_100, max: maxConfBucket },
+        { name: '85-94%', value: conf85_94, max: maxConfBucket },
+        { name: '75-84%', value: conf75_84, max: maxConfBucket },
+        { name: '65-74% Note:', value: confLow, max: maxConfBucket },
+      ]
+    };
+  }, [invoices]);
+
   return (
     <div className="animate-fade-in-up">
       <div className="non-po-header">
@@ -48,22 +162,22 @@ function NonPoDashboard({ invoices }: Props) {
 
       <div className="non-po-grid">
         <KPIBox
-          title="TOTAL NON-PO INVOICES (MTD)"
-          value="241"
+          title="TOTAL NON-PO INVOICES"
+          value={totalInvoices.toString()}
           icon={<FileText color="var(--accent-blue)" size={24} />}
           trend=""
           trendUp={true}
         />
         <KPIBox
           title="PENDING GL ASSIGNMENT"
-          value="19"
+          value={pendingGL.toString()}
           icon={<AlertCircle color="var(--accent-red)" size={24} />}
           trend=""
           trendUp={false}
         />
         <KPIBox
           title="HIGH CONFIDENCE (≥90%)"
-          value="78%"
+          value={`${highConfidencePct}%`}
           icon={<Percent color="var(--accent-primary)" size={24} />}
           trend=""
           trendUp={true}
@@ -81,7 +195,7 @@ function NonPoDashboard({ invoices }: Props) {
         <div className="non-po-performance-header">
           <h3 className="non-po-performance-title">
             <Activity color="var(--accent-primary)" size={18} />
-            GL ASSIGNMENT AGENT PERFORMANCE — LAST 7 DAYS
+            GL ASSIGNMENT AGENT PERFORMANCE
           </h3>
         </div>
         <div className="non-po-performance-metrics">
@@ -90,28 +204,30 @@ function NonPoDashboard({ invoices }: Props) {
               <TrendingUp size={14} />
               Average Confidence Score
             </span>
-            <span className="non-po-metric-value success">91.3%</span>
+            <span className="non-po-metric-value success">{avgConfidenceScore}%</span>
           </div>
           <div className="non-po-metric">
             <span className="non-po-metric-label">
               <FileText size={14} />
               Invoices Processed
             </span>
-            <span className="non-po-metric-value">241</span>
+            <span className="non-po-metric-value">{totalInvoices}</span>
           </div>
           <div className="non-po-metric">
             <span className="non-po-metric-label">
               <CheckCircle2 size={14} />
-              Auto-Approved
+              Auto-Approved / Clean
             </span>
-            <span className="non-po-metric-value">189</span>
+            <span className="non-po-metric-value">{autoApprovedCount}</span>
           </div>
           <div className="non-po-metric">
             <span className="non-po-metric-label">
               <AlertTriangle size={14} />
               Manual Review Required
             </span>
-            <span className="non-po-metric-value warning">52</span>
+            <span className={`non-po-metric-value ${manualReviewCount > 0 ? "warning" : ""}`}>
+              {manualReviewCount}
+            </span>
           </div>
         </div>
       </div>
@@ -178,7 +294,7 @@ function NonPoDashboard({ invoices }: Props) {
                   <div 
                     style={{ 
                       height: '100%', 
-                      width: `${(item.value / item.max) * 100}%`, 
+                      width: `${item.max > 0 ? (item.value / item.max) * 100 : 0}%`, 
                       background: index === 0 ? '#1b5e20' : index === 1 ? '#2e7d32' : index === 2 ? '#81c784' : '#c8e6c9',
                       borderRadius: '4px'
                     }} 

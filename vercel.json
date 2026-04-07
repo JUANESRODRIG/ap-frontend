@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd AP-Fronten_New && npm install && npm run build",
+  "outputDirectory": "AP-Fronten_New/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

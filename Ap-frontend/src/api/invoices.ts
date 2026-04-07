@@ -43,7 +43,7 @@ export async function uploadInvoices(
         formData.append('file', file);
     });
 
-    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/upload-invoice', {
+    const response = await fetch('https://n8n.sofiatechnology.ai/webhook/production-ap', {
         method: 'POST',
         body: formData,
     });

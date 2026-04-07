@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     User,
     Zap,
+    FileText,
 } from "lucide-react";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/" },
     { label: "Upload Invoice", icon: Upload, path: "/upload" },
+    { label: "Upload Contract", icon: FileText, path: "/upload-contract" },
 ];
 
 function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Props) {
