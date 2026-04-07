@@ -32,12 +32,14 @@ function confidenceColor(level: 'high' | 'medium' | 'low') {
 function approvalLabel(val: string) {
     if (val === 'approved') return 'Approved';
     if (val === 'rejected') return 'Rejected';
+    if (val === 'ready_for_approval') return 'Ready for Approval';
     return 'Pending';
 }
 
 function approvalIcon(val: string) {
     if (val === 'approved') return <CheckCircle2 size={16} color="#10b981" />;
     if (val === 'rejected') return <AlertTriangle size={16} color="#ef4444" />;
+    if (val === 'ready_for_approval') return <Shield size={16} color="#0ea5e9" />;
     return <Clock size={16} color="#f59e0b" />;
 }
 
@@ -54,11 +56,13 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
         <>
             {/* Header */}
             <div className="result-header">
-                <div className="status-icon-success">
-                    <CheckCircle2 size={32} color="#10b981" />
+                <div className={data.status === 'ready_for_approval' ? "status-icon-ready" : "status-icon-success"}>
+                    {data.status === 'ready_for_approval' ? <Shield size={32} color="#0ea5e9" /> : <CheckCircle2 size={32} color="#10b981" />}
                 </div>
-                <h2>Invoice Classified</h2>
-                <p className="result-subtitle">Pending 3-level approval</p>
+                <h2>{data.status === 'ready_for_approval' ? 'Processed: Ready for Approval' : 'Invoice Classified'}</h2>
+                <p className="result-subtitle">
+                    {data.status === 'ready_for_approval' ? 'Automated extraction completed with high confidence.' : (data.message || 'Pending 3-level approval')}
+                </p>
             </div>
 
             {/* Message */}

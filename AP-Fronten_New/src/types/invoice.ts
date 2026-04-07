@@ -96,7 +96,7 @@ export interface WebhookCategorize {
 /** Response when the invoice is classified and sent for approval */
 export interface WebhookPendingApproval {
     invoice_number: string;
-    status: 'pending_approval';
+    status: 'pending_approval' | 'ready_for_approval';
     message: string;
     vendor: WebhookVendor;
     accounting: WebhookAccounting;
@@ -130,7 +130,7 @@ export type WebhookResponse = WebhookPendingApproval | WebhookNeedsReview;
 
 /** Helper to check which response type we got */
 export function isPendingApproval(r: WebhookResponse): r is WebhookPendingApproval {
-    return r.status === 'pending_approval';
+    return r.status === 'pending_approval' || (r.status as string) === 'ready_for_approval';
 }
 
 export function isNeedsReview(r: WebhookResponse): r is WebhookNeedsReview {
