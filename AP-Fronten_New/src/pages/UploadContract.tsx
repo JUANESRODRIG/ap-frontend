@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { CloudUpload, AlertCircle, Loader, Building2, ChevronDown, Search, MapPin, Check, Upload } from "lucide-react";
+import { CloudUpload, AlertCircle, Loader, Upload } from "lucide-react";
 import "./UploadInvoice.css";
 import ContractResultModal from "./ContractResultModal";
 
 export default function UploadContract() {
-    const [companies, setCompanies] = useState<any[]>([]);
     const [selectedCompany, setSelectedCompany] = useState<any | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -17,99 +16,25 @@ export default function UploadContract() {
     const [result, setResult] = useState<any>(null);
     const [showResult, setShowResult] = useState(false);
 
-    // Dropdown state
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [highlightedIndex, setHighlightedIndex] = useState(-1);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const fetchCompanies = async () => {
+        const fetchDefaultCompany = async () => {
             const { data, error } = await supabase
                 .from("companies")
-                .select("company_code, company_name, Description, Area");
+                .select("company_code, company_name, Description, Area")
+                .eq('company_code', 'LATAM')
+                .maybeSingle();
 
             if (error) {
-                console.error("Error fetching companies:", error);
+                console.error("Error fetching company:", error);
             } else if (data) {
-                setCompanies(data);
+                setSelectedCompany(data);
             }
         };
 
-        fetchCompanies();
+        fetchDefaultCompany();
     }, []);
-
-    // Close dropdown on click outside
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setDropdownOpen(false);
-                setSearchQuery("");
-                setHighlightedIndex(-1);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    // Focus search input when dropdown opens
-    useEffect(() => {
-        if (dropdownOpen && searchInputRef.current) {
-            searchInputRef.current.focus();
-        }
-    }, [dropdownOpen]);
-
-    const filteredCompanies = companies.filter((c) => {
-        const q = searchQuery.toLowerCase();
-        return (
-            c.company_name.toLowerCase().includes(q) ||
-            c.company_code.toLowerCase().includes(q) ||
-            (c.Description && c.Description.toLowerCase().includes(q)) ||
-            (c.Area && c.Area.toLowerCase().includes(q))
-        );
-    });
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!dropdownOpen) {
-            if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
-                e.preventDefault();
-                setDropdownOpen(true);
-            }
-            return;
-        }
-
-        switch (e.key) {
-            case "ArrowDown":
-                e.preventDefault();
-                setHighlightedIndex((prev) =>
-                    prev < filteredCompanies.length - 1 ? prev + 1 : 0
-                );
-                break;
-            case "ArrowUp":
-                e.preventDefault();
-                setHighlightedIndex((prev) =>
-                    prev > 0 ? prev - 1 : filteredCompanies.length - 1
-                );
-                break;
-            case "Enter":
-                e.preventDefault();
-                if (highlightedIndex >= 0 && highlightedIndex < filteredCompanies.length) {
-                    setSelectedCompany(filteredCompanies[highlightedIndex]);
-                    setDropdownOpen(false);
-                    setSearchQuery("");
-                    setHighlightedIndex(-1);
-                }
-                break;
-            case "Escape":
-                setDropdownOpen(false);
-                setSearchQuery("");
-                setHighlightedIndex(-1);
-                break;
-        }
-    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -216,99 +141,6 @@ export default function UploadContract() {
                     Select a company and upload a PDF contract to process.
                 </p>
 
-                {/* Company dropdown */}
-                <div className="company-dropdown-wrapper" ref={dropdownRef} onKeyDown={handleKeyDown} style={{ marginBottom: '20px' }}>
-                    <label className="company-dropdown-label">
-                        <Building2 size={15} />
-                        Select Company
-                    </label>
-                    <button
-                        type="button"
-                        className={`company-dropdown-trigger ${dropdownOpen ? "open" : ""} ${selectedCompany ? "has-value" : ""}`}
-                        onClick={() => setDropdownOpen((prev) => !prev)}
-                        aria-haspopup="listbox"
-                        aria-expanded={dropdownOpen}
-                        id="company-select"
-                    >
-                        {selectedCompany ? (
-                            <div className="company-dropdown-selected">
-                                <div className="company-dropdown-selected-avatar">
-                                    {selectedCompany.company_name.charAt(0)}
-                                </div>
-                                <div className="company-dropdown-selected-info">
-                                    <span className="company-dropdown-selected-name">{selectedCompany.company_name}</span>
-                                    <span className="company-dropdown-selected-code">{selectedCompany.company_code}</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <span className="company-dropdown-placeholder">Choose a company…</span>
-                        )}
-                        <ChevronDown size={18} className={`company-dropdown-chevron ${dropdownOpen ? "rotated" : ""}`} />
-                    </button>
-
-                    {dropdownOpen && (
-                        <div className="company-dropdown-menu" role="listbox">
-                            <div className="company-dropdown-search-wrap">
-                                <Search size={15} className="company-dropdown-search-icon" />
-                                <input
-                                    ref={searchInputRef}
-                                    type="text"
-                                    className="company-dropdown-search"
-                                    placeholder="Search companies…"
-                                    value={searchQuery}
-                                    onChange={(e) => {
-                                        setSearchQuery(e.target.value);
-                                        setHighlightedIndex(0);
-                                    }}
-                                />
-                            </div>
-                            <div className="company-dropdown-list">
-                                {filteredCompanies.length === 0 ? (
-                                    <div className="company-dropdown-empty">No companies found</div>
-                                ) : (
-                                    filteredCompanies.map((company, index) => (
-                                        <button
-                                            key={company.company_code}
-                                            type="button"
-                                            role="option"
-                                            aria-selected={selectedCompany?.company_code === company.company_code}
-                                            className={`company-dropdown-item ${selectedCompany?.company_code === company.company_code ? "selected" : ""} ${highlightedIndex === index ? "highlighted" : ""}`}
-                                            onClick={() => {
-                                                setSelectedCompany(company);
-                                                setDropdownOpen(false);
-                                                setSearchQuery("");
-                                                setHighlightedIndex(-1);
-                                            }}
-                                            onMouseEnter={() => setHighlightedIndex(index)}
-                                        >
-                                            <div className="company-dropdown-item-avatar">
-                                                {company.company_name.charAt(0)}
-                                            </div>
-                                            <div className="company-dropdown-item-info">
-                                                <span className="company-dropdown-item-name">{company.company_name}</span>
-                                                <span className="company-dropdown-item-meta">
-                                                    <span className="company-dropdown-item-code">{company.company_code}</span>
-                                                    {company.Area && (
-                                                        <span className="company-dropdown-item-area">
-                                                            <MapPin size={11} />
-                                                            {company.Area}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                {company.Description && (
-                                                    <span className="company-dropdown-item-desc">{company.Description}</span>
-                                                )}
-                                            </div>
-                                            {selectedCompany?.company_code === company.company_code && (
-                                                <Check size={16} className="company-dropdown-item-check" />
-                                            )}
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
 
             </div>
 

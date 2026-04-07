@@ -157,17 +157,17 @@ function Dashboard() {
         setClearedValue(cleared);
 
         // KPI 1: Non-PO Invoices Pending Approval
-        // po_reference IS NULL AND status IN ('Processing','Parked','Exception')
+        // po_reference IS NULL OR 'NON-PO' AND status IN ('Processing','Parked','Exception','needs_review')
         const nonPoPending = inv.filter(i => 
-            !i.po_reference && 
-            ['Processing', 'Parked', 'Exception'].includes(i.status)
+            (!i.po_reference || i.po_reference === 'NON-PO') && 
+            ['Processing', 'Parked', 'Exception', 'needs_review'].includes(i.status)
         );
         setNonPoPendingCount(nonPoPending.length);
 
         // KPI 2: Unclassified Vendors (AP Review Queue)
-        // po_reference IS NULL AND vendor_id IS NULL
+        // po_reference IS NULL OR 'NON-PO' AND vendor_id IS NULL
         const unclassifiedVendors = inv.filter(i => 
-            !i.po_reference && !i.vendor_id
+            (!i.po_reference || i.po_reference === 'NON-PO') && !i.vendor_id
         );
         setUnclassifiedVendorsCount(unclassifiedVendors.length);
         
@@ -292,7 +292,7 @@ function Dashboard() {
             )}
                 </>
             ) : (
-                <NonPoDashboard invoices={invoices.filter(i => !i.po_reference)} />
+                <NonPoDashboard invoices={invoices.filter(i => !i.po_reference || i.po_reference === 'NON-PO')} />
             )}
 
         </div>
