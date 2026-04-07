@@ -95,7 +95,7 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                     <div className="suggestion-field">
                         <span className="label">Status</span>
                         <span className={`value category-badge ${data.vendor.vendor_found ? 'badge-green' : 'badge-orange'}`}>
-                            {data.vendor.vendor_found ? 'Found in DB' : 'Not Found'}
+                            {data.vendor.vendor_found ? 'Extracted' : 'Not Extracted'}
                         </span>
                     </div>
                     {data.vendor.note && !data.vendor.vendor_found && (
@@ -234,7 +234,7 @@ function NeedsReviewView({ data }: { data: WebhookNeedsReview }) {
                 <div className="info-card">
                     <span className="label">Vendor Found</span>
                     <span className={`value category-badge ${data.vendor_found ? 'badge-green' : 'badge-red'}`}>
-                        {data.vendor_found ? 'Yes' : 'No'}
+                        {data.vendor_found ? 'Extracted' : 'Not Extracted'}
                     </span>
                 </div>
                 <div className="info-card">

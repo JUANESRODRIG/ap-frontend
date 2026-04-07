@@ -19,7 +19,7 @@ export interface InvoiceData {
     invoice_date: string;
     vendor_name: string;
     vendor_id: string;
-    po_reference: string;
+    invoice_type: string;
     currency: string;
     invoice_total: number | null;
     subtotal: number | null;
@@ -55,7 +55,7 @@ export interface N8NInvoiceResponse {
     issues?: string;
     summary?: string;
     vendor_id?: string;
-    po_reference?: string;
+    invoice_type?: string;
 }
 
 /* ── New webhook response types ── */

@@ -64,8 +64,14 @@ function NonPoDashboard({ invoices }: Props) {
       }
 
       // Confidence
-      const confVal = parseInt(inv.confidence || "0", 10);
-      if (!isNaN(confVal) && inv.confidence != null) {
+      const rawConf = inv.Confidence !== undefined ? inv.Confidence : inv.confidence;
+      let confVal = parseFloat(rawConf || "0");
+      if (!isNaN(confVal) && rawConf != null) {
+        // If confidence is a decimal <= 1, multiply by 100
+        if (confVal <= 1) {
+          confVal = confVal * 100;
+        }
+        
         totalConfidence += confVal;
         confidenceCount++;
         
@@ -82,9 +88,8 @@ function NonPoDashboard({ invoices }: Props) {
       const cat = inv.category || inv.suggested_category || "Uncategorized";
       categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 
-      // Date Trend (mocking month/day)
       const dateStr = inv.invoice_date || inv.created_at;
-      if (dateStr && !isNaN(confVal) && inv.confidence != null) {
+      if (dateStr && !isNaN(confVal) && rawConf != null) {
         try {
           const d = new Date(dateStr);
           if (!isNaN(d.getTime())) {

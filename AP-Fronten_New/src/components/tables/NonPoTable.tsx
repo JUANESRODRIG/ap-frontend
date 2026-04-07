@@ -9,7 +9,8 @@ interface Invoice {
   invoice_total: number;
   category?: string;
   invoice_date?: string;
-  confidence?: string;
+  confidence?: string | number;
+  Confidence?: string | number;
 }
 
 interface Props {
@@ -43,9 +44,12 @@ function getConfidenceColor(confidence: string) {
   return "#ef4444"; // Red
 }
 
-function getConfidenceValue(confidenceStr: string | undefined, defaultVal: number) {
-  if (!confidenceStr) return defaultVal;
-  return parseInt(confidenceStr) || defaultVal;
+function getConfidenceValue(confidenceVal: string | number | undefined, defaultVal: number) {
+  if (confidenceVal === undefined || confidenceVal === null) return defaultVal;
+  let val = typeof confidenceVal === 'number' ? confidenceVal : parseFloat(confidenceVal);
+  if (isNaN(val)) return defaultVal;
+  if (val <= 1) val = val * 100;
+  return Math.round(val);
 }
 
 function NonPoTable({ invoices }: Props) {
@@ -60,7 +64,8 @@ function NonPoTable({ invoices }: Props) {
       const cMatch = categoryFilter === "All Categories" || (inv.category || "Uncategorized") === categoryFilter;
       
       let confMatch = true;
-      const confVal = getConfidenceValue(inv.confidence, 85); // Mock fallback to 85 if null
+      const rawConf = inv.Confidence !== undefined ? inv.Confidence : inv.confidence;
+      const confVal = getConfidenceValue(rawConf, 85); // Mock fallback to 85 if null
       if (confidenceFilter === "High (≥90%)") confMatch = confVal >= 90;
       if (confidenceFilter === "Medium (70-89%)") confMatch = confVal >= 70 && confVal < 90;
       if (confidenceFilter === "Low (<70%)") confMatch = confVal < 70;
@@ -135,7 +140,8 @@ function NonPoTable({ invoices }: Props) {
               const mockCategory = inv.category || ((i % 2 === 0) ? "Utilities" : "Professional Services");
               const mockGlAccount = `6${(i % 5) + 1}00-0${(i % 3) + 1}1`;
               const mockGlDesc = mockCategory.toLowerCase();
-              const confVal = getConfidenceValue(inv.confidence, 85 + (i % 15));
+              const rawConf = inv.Confidence !== undefined ? inv.Confidence : inv.confidence;
+              const confVal = getConfidenceValue(rawConf, 85 + (i % 15));
               const displayConf = `${confVal}%`;
               const confColor = getConfidenceColor(displayConf);
               
