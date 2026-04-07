@@ -44,6 +44,44 @@ function Dashboard() {
         fetchInvoices();
         fetchExceptions();
         fetchVendorPerformance();
+
+        // Subscribe to real-time updates from Supabase
+        const subscription = supabase
+            .channel('invoices-realtime')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'invoices' 
+            }, (payload) => {
+                console.log('Real-time update received:', payload);
+                
+                if (payload.eventType === 'INSERT') {
+                    setInvoices(prev => {
+                        const next = [...prev, payload.new];
+                        calculateKPIs(next);
+                        return next;
+                    });
+                } else if (payload.eventType === 'UPDATE') {
+                    setInvoices(prev => {
+                        const next = prev.map(inv => 
+                            inv.invoice_id === payload.new.invoice_id ? payload.new : inv
+                        );
+                        calculateKPIs(next);
+                        return next;
+                    });
+                } else if (payload.eventType === 'DELETE') {
+                    setInvoices(prev => {
+                        const next = prev.filter(inv => inv.invoice_id !== (payload.old as any).invoice_id);
+                        calculateKPIs(next);
+                        return next;
+                    });
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
     }, []);
 
     async function fetchExceptions() {
@@ -133,7 +171,7 @@ function Dashboard() {
     function calculateKPIs(inv: any[]) {
         const total = inv.length;
         const clean = inv.filter(
-            (i) => i.status === "Approved" || i.status === "Clean"
+            (i) => i.status === "Approved" || i.status === "Clean" || i.status === "ready_for_approval"
         ).length;
 
         const parked = inv.filter(

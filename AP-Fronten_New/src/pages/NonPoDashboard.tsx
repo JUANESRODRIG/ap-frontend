@@ -57,7 +57,7 @@ function NonPoDashboard({ invoices }: Props) {
         pendingCount++;
       }
       
-      if (status === "approved" || status === "clean") {
+      if (status === "approved" || status === "clean" || status === "ready_for_approval") {
         autoApprove++;
       } else if (status === "exception" || status === "rejected" || status === "needs_review") {
         manualReview++;

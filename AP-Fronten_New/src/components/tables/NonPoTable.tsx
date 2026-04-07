@@ -20,6 +20,7 @@ interface Props {
 function getStatusClass(status: string) {
   const norm = status?.toLowerCase() || "";
   if (norm.includes("approved")) return "status-approved-purple";
+  if (norm.includes("ready")) return "status-ready-blue";
   if (norm.includes("exception") || norm.includes("rejected")) return "status-exception-red";
   if (norm.includes("parked") || norm.includes("review") || norm.includes("pending")) return "status-parked-orange";
   if (norm.includes("processing") || norm.includes("manual")) return "status-processing-grey";
@@ -186,6 +187,43 @@ function NonPoTable({ invoices }: Props) {
       <div style={{ padding: "16px 24px", fontSize: "0.75rem", color: "var(--text-muted)", borderTop: "1px solid var(--border-subtle)" }}>
         * Invoices with &gt;90% confidence in GL auto-assignment are automatically approved. Lower scores require manual review.
       </div>
+      <style>{`
+        .status-badge-new {
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          display: inline-block;
+          min-width: 80px;
+          text-align: center;
+          text-transform: capitalize;
+        }
+        .status-approved-purple {
+          background: rgba(139, 92, 246, 0.15);
+          color: #a78bfa;
+          border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .status-ready-blue {
+          background: rgba(14, 165, 233, 0.15);
+          color: #38bdf8;
+          border: 1px solid rgba(14, 165, 233, 0.3);
+        }
+        .status-exception-red {
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .status-parked-orange {
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .status-processing-grey {
+          background: rgba(107, 114, 128, 0.15);
+          color: #9ca3af;
+          border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+      `}</style>
     </div>
   );
 }

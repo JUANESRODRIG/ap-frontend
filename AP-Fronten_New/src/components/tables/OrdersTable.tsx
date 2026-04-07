@@ -18,6 +18,7 @@ interface Props {
 function getStatusClass(status: string) {
   const norm = status?.toLowerCase() || "";
   if (norm.includes("approved")) return "status-approved-purple";
+  if (norm.includes("ready")) return "status-ready-blue";
   if (norm.includes("exception") || norm.includes("rejected")) return "status-exception-red";
   if (norm.includes("parked")) return "status-parked-orange";
   if (norm.includes("processing") || norm.includes("pending")) return "status-processing-grey";
@@ -262,6 +263,11 @@ function OrdersTable({ invoices }: Props) {
           background: rgba(245, 158, 11, 0.15);
           color: #fbbf24;
           border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .status-ready-blue {
+          background: rgba(14, 165, 233, 0.15);
+          color: #38bdf8;
+          border: 1px solid rgba(14, 165, 233, 0.3);
         }
         .status-processing-grey {
           background: rgba(107, 114, 128, 0.15);
