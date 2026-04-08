@@ -186,7 +186,6 @@ function NonPoTable({ invoices }: Props) {
             <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
               <th style={{ textAlign: "left", padding: "14px 24px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>ID</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Emission Date</th>
-              <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Due</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Vendor</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Category</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>GL Account</th>
@@ -210,7 +209,6 @@ function NonPoTable({ invoices }: Props) {
               // Mock Fallbacks for missing Supabase fields according to Design 
               // Using index 'i' to vary data deterministically if missing
               const mockCreationDate = inv.invoice_date || `2024-08-${String(10 + (i%20)).padStart(2, '0')}`;
-              const mockDueDate = `2024-09-${String(10 + (i%20)).padStart(2, '0')}`;
               const mockCategory = inv.category || ((i % 2 === 0) ? "Utilities" : "Professional Services");
               const mockGlAccount = `6${(i % 5) + 1}00-0${(i % 3) + 1}1`;
               const mockGlDesc = mockCategory.toLowerCase();
@@ -226,7 +224,6 @@ function NonPoTable({ invoices }: Props) {
                 <tr key={inv.invoice_id || i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                   <td style={{ padding: "14px 24px", color: "var(--text-primary)", fontWeight: 500, fontSize: "0.85rem" }}>{inv.invoice_number || `#${inv.invoice_id}`}</td>
                   <td style={{ padding: "14px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>{mockCreationDate}</td>
-                  <td style={{ padding: "14px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>{mockDueDate}</td>
                   <td style={{ padding: "14px", color: "var(--text-primary)", fontSize: "0.85rem", fontWeight: 500 }}>{inv.vendor_id || "Unknown Vendor"}</td>
                   <td style={{ padding: "14px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>{mockCategory}</td>
                   <td style={{ padding: "14px", color: "var(--text-muted)", fontSize: "0.85rem", fontFamily: "monospace" }}>{mockGlAccount}</td>
