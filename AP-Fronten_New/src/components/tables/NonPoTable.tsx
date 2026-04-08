@@ -214,7 +214,8 @@ function NonPoTable({ invoices }: Props) {
               // Custom Due Date Logic
               const baseDate = new Date(mockCreationDate);
               baseDate.setDate(baseDate.getDate() + 30);
-              const mockDueDate = String(inv.invoice_id) === '2211' 
+              const isTargetInvoice = String(inv.invoice_id) === '2211' || String(inv.invoice_number) === '2211';
+              const mockDueDate = isTargetInvoice 
                 ? mockCreationDate 
                 : baseDate.toISOString().split('T')[0];
               
