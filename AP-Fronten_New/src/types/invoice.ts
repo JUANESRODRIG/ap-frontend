@@ -93,6 +93,25 @@ export interface WebhookCategorize {
     cost_type: string;
 }
 
+export interface WebhookHistoricalInvoice {
+    invoice_number: string;
+    category: string;
+    date: string;
+}
+
+export interface WebhookHistoricalComparison {
+    current_category: string;
+    historical_category: string;
+    mismatch: boolean;
+    message: string;
+}
+
+export interface WebhookHistoricalAnalysis {
+    has_historical: boolean;
+    historical_invoice?: WebhookHistoricalInvoice;
+    comparison?: WebhookHistoricalComparison;
+}
+
 /** Response when the invoice is classified and sent for approval */
 export interface WebhookPendingApproval {
     invoice_number: string;
@@ -104,6 +123,7 @@ export interface WebhookPendingApproval {
     amount: WebhookAmount;
     approval: WebhookApproval;
     categorize?: WebhookCategorize;
+    historical_analysis?: WebhookHistoricalAnalysis;
 }
 
 /** Response when the invoice needs manual review (low confidence) */

@@ -126,8 +126,23 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                     </div>
                     <div className="suggestion-field">
                         <span className="label">GL Account</span>
-                        <span className="value" style={{ fontFamily: 'monospace', fontWeight: 700 }}>{data.accounting.gl_account}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="value" style={{ fontFamily: 'monospace', fontWeight: 700 }}>{data.accounting.gl_account}</span>
+                            {data.historical_analysis?.has_historical && (
+                                <span className={`category-badge ${data.historical_analysis.comparison?.mismatch ? 'badge-orange' : 'badge-green'}`} style={{ fontSize: '0.65rem', padding: '2px 8px', textTransform: 'uppercase' }}>
+                                    {data.historical_analysis.comparison?.mismatch ? 'Mismatch' : 'Match'}
+                                </span>
+                            )}
+                        </div>
                     </div>
+                    {data.historical_analysis?.has_historical && data.historical_analysis.comparison?.mismatch && (
+                        <div className="suggestion-field full-width">
+                            <div className="vendor-warning" style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', fontSize: '0.8rem', padding: '8px 12px' }}>
+                                <AlertTriangle size={14} color="#f59e0b" />
+                                <span>{data.historical_analysis.comparison.message}</span>
+                            </div>
+                        </div>
+                    )}
                     {data.accounting.cost_center && data.accounting.cost_center !== 'null' && (
                         <div className="suggestion-field">
                             <span className="label">Cost Center</span>
