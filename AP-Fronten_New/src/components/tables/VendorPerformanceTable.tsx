@@ -28,8 +28,13 @@ function VendorPerformanceTable({ vendors }: { vendors: Vendor[] }) {
         return vendors.map(v => ({
             ...v,
             risk: getRiskLevel(v.issues)
-        })).filter(v => {
+        }))
+        .filter(v => {
             return riskFilter === "All Risk Levels" || v.risk === riskFilter;
+        })
+        .sort((a, b) => {
+            if (b.issues !== a.issues) return b.issues - a.issues;
+            return b.issue_value - a.issue_value;
         });
     }, [vendors, riskFilter]);
 
@@ -117,10 +122,10 @@ function VendorPerformanceTable({ vendors }: { vendors: Vendor[] }) {
                 </div>
             )}
 
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-wrapper" style={{ overflowX: "auto", maxHeight: "420px", overflowY: "auto", borderRadius: "8px" }}>
                 <table className="data-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
-                    <thead>
-                        <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <thead style={{ position: "sticky", top: 0, zIndex: 10, backgroundColor: "var(--bg-card)" }}>
+                        <tr style={{ borderBottom: "2px solid var(--border-subtle)" }}>
                             <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Vendor</th>
                             <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Total Issues</th>
                             <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Issue Value</th>

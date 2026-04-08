@@ -5,7 +5,6 @@ import BlockResolutionPanel from "../components/cards/BlockResolutionPanel";
 import RootCauseChart from "../components/charts/RootCauseChart";
 import OrdersTable from "../components/tables/OrdersTable";
 import VendorPerformanceTable from "../components/tables/VendorPerformanceTable";
-import NonPoPipeline from "../components/cards/NonPoPipeline";
 import NonPoDashboard from "./NonPoDashboard";
 import { supabase } from "../lib/supabase";
 import { FileText, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
@@ -22,9 +21,7 @@ function Dashboard() {
     const [parkedValue, setParkedValue] = useState(0);
     const [clearedValue, setClearedValue] = useState(0);
 
-    const [nonPoPendingCount, setNonPoPendingCount] = useState<number | undefined>(undefined);
-    const [unclassifiedVendorsCount, setUnclassifiedVendorsCount] = useState<number | undefined>(undefined);
-    const [nonPoTableData, setNonPoTableData] = useState<any[] | undefined>(undefined);
+
 
     function generateRootCauseData(exceptions: any[]) {
         const counts: any = {};
@@ -194,19 +191,7 @@ function Dashboard() {
         setParkedValue(parkedVal);
         setClearedValue(cleared);
 
-        const nonPoPending = inv.filter(i => 
-            i.invoice_type === 'NON-PO' && 
-            ['Processing', 'Parked', 'Exception', 'needs_review'].includes(i.status)
-        );
-        setNonPoPendingCount(nonPoPending.length);
 
-        const unclassifiedVendors = inv.filter(i => 
-            i.invoice_type === 'NON-PO' && !i.vendor_id
-        );
-        setUnclassifiedVendorsCount(unclassifiedVendors.length);
-        
-        // Use mock data for now
-        setNonPoTableData(undefined);
     }
 
     const exceptionRate =
@@ -250,11 +235,7 @@ function Dashboard() {
                         <h1 className="dashboard-title">Dashboard Overview</h1>
                     </div>
 
-            <NonPoPipeline 
-                pendingApprovalCount={nonPoPendingCount}
-                unclassifiedVendorsCount={unclassifiedVendorsCount}
-                tableData={nonPoTableData}
-            />
+
 
             <div className="kpi-grid">
 
