@@ -193,6 +193,14 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                             <span className="confidence-bar-label" style={{ color: confClr }}>{confPct}%</span>
                         </div>
                     </div>
+                    {data.classification.reason && (
+                        <div className="suggestion-field full-width">
+                            <span className="label">Confidence Reason</span>
+                            <p className="reason-text" style={{ marginTop: '4px', fontStyle: 'normal', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                {data.classification.reason}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 

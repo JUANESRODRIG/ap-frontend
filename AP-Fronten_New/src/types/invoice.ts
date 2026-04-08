@@ -75,6 +75,7 @@ export interface WebhookAccounting {
 export interface WebhookClassification {
     method: string;
     confidence: number;
+    reason?: string;
 }
 
 export interface WebhookAmount {
