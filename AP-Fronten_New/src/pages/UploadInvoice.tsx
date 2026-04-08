@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type DragEvent, type ChangeEvent } from "react";
-import { CloudUpload, Upload } from "lucide-react";
+import { CloudUpload, Upload, Loader2, Sparkles, Cpu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import "./UploadInvoice.css";
 import { uploadInvoices } from "../services/invoiceService";
 import type { WebhookResponse, Company } from "../types/invoice";
@@ -146,12 +147,79 @@ function UploadInvoice() {
                 <p className="upload-footer-text">
                     Supported: PDF, PNG, JPG, XLSX, CSV — Max 25MB per file
                 </p>
-                {uploading && file && (
-                    <p style={{ marginTop: 10, color: '#8b5cf6', fontSize: '0.85rem' }}>
-                        Uploading: {file.name}...
-                    </p>
-                )}
             </div>
+
+            <AnimatePresence>
+                {uploading && (
+                    <motion.div 
+                        className="processing-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div 
+                            className="processing-content"
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        >
+                            <div className="processing-visual">
+                                <motion.div 
+                                    className="processing-spinner-outer"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                                />
+                                <motion.div 
+                                    className="processing-spinner-inner"
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                />
+                                <div className="processing-icon">
+                                    <Cpu size={32} className="ai-cpu-icon" />
+                                    <motion.div 
+                                        className="sparkle-icon"
+                                        animate={{ 
+                                            scale: [1, 1.2, 1],
+                                            opacity: [0.5, 1, 0.5] 
+                                        }}
+                                        transition={{ duration: 2, repeat: Infinity }}
+                                    >
+                                        <Sparkles size={16} />
+                                    </motion.div>
+                                </div>
+                            </div>
+
+                            <div className="processing-text">
+                                <h3 className="processing-title">AI Agent Processing</h3>
+                                <div className="processing-steps">
+                                    <div className="step active">
+                                        <Loader2 size={14} className="spin" />
+                                        <span>Analyzing document structure...</span>
+                                    </div>
+                                    <div className="processing-filename">
+                                        Processing: <strong>{file?.name}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="processing-progress">
+                                <motion.div 
+                                    className="processing-progress-bar"
+                                    animate={{ 
+                                        x: ["-100%", "100%"] 
+                                    }}
+                                    transition={{ 
+                                        duration: 1.5, 
+                                        repeat: Infinity, 
+                                        ease: "easeInOut" 
+                                    }}
+                                />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <InvoiceResultModal
                 isOpen={showResult}

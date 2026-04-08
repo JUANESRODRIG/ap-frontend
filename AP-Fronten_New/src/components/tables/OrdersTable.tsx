@@ -41,9 +41,10 @@ function OrdersTable({ invoices }: Props) {
   const [vendorFilter, setVendorFilter] = useState("All Vendors");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
+  const [valueFilter, setValueFilter] = useState("All Amounts");
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const hasFilters = vendorFilter !== "All Vendors" || statusFilter !== "All Statuses" || categoryFilter !== "All Categories";
+  const hasFilters = vendorFilter !== "All Vendors" || statusFilter !== "All Statuses" || categoryFilter !== "All Categories" || valueFilter !== "All Amounts";
 
   const uniqueVendors = useMemo(() => ["All Vendors", ...Array.from(new Set(invoices.map(i => i.vendor_id)))], [invoices]);
   const uniqueStatuses = useMemo(() => ["All Statuses", ...Array.from(new Set(invoices.map(i => i.status)))], [invoices]);
@@ -54,9 +55,16 @@ function OrdersTable({ invoices }: Props) {
       const vMatch = vendorFilter === "All Vendors" || inv.vendor_id === vendorFilter;
       const sMatch = statusFilter === "All Statuses" || inv.status === statusFilter;
       const cMatch = categoryFilter === "All Categories" || (inv.category || "Uncategorized") === categoryFilter;
-      return vMatch && sMatch && cMatch;
+      
+      let vMatchAmt = true;
+      const total = Number(inv.invoice_total || 0);
+      if (valueFilter === "< $1,000") vMatchAmt = total < 1000;
+      else if (valueFilter === "$1,000 - $5,000") vMatchAmt = total >= 1000 && total <= 5000;
+      else if (valueFilter === "> $5,000") vMatchAmt = total > 5000;
+
+      return vMatch && sMatch && cMatch && vMatchAmt;
     });
-  }, [invoices, vendorFilter, statusFilter, categoryFilter]);
+  }, [invoices, vendorFilter, statusFilter, categoryFilter, valueFilter]);
 
   // Theme-aware button colors
   const btnBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(139, 92, 246, 0.06)";
@@ -178,12 +186,25 @@ function OrdersTable({ invoices }: Props) {
               {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+          <div className="filter-group">
+            <label style={{ display: "block", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.05em" }}>Amount</label>
+            <select 
+              value={valueFilter}
+              onChange={(e) => setValueFilter(e.target.value)}
+              style={{ width: "100%", background: "var(--bg-base)", border: "1px solid var(--border-default)", color: "var(--text-primary)", padding: "10px", borderRadius: "8px", fontSize: "0.9rem", transition: "all var(--transition-base)" }}
+            >
+              <option value="All Amounts">All Amounts</option>
+              <option value="< $1,000">&lt; $1,000</option>
+              <option value="$1,000 - $5,000">$1,000 - $5,000</option>
+              <option value="> $5,000">&gt; $5,000</option>
+            </select>
+          </div>
         </div>
       )}
 
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", maxHeight: "500px", overflowY: "auto" }}>
         <table className="data-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
-          <thead>
+          <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "var(--bg-card)" }}>
             <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
               <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>ID</th>
               <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Invoice Number</th>
@@ -196,7 +217,7 @@ function OrdersTable({ invoices }: Props) {
           </thead>
 
           <tbody>
-            {filteredInvoices.slice(0, 10).map((inv) => (
+            {filteredInvoices.map((inv) => (
               <tr key={inv.invoice_id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                 <td style={{ padding: "16px", color: "var(--text-secondary)", fontWeight: 500 }}>#{inv.invoice_id}</td>
                 <td style={{ padding: "16px", color: "var(--text-secondary)" }}>{inv.invoice_number}</td>

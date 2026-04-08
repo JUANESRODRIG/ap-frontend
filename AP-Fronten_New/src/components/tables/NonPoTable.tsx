@@ -56,12 +56,26 @@ function getConfidenceValue(confidenceVal: string | number | undefined, defaultV
 function NonPoTable({ invoices }: Props) {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [confidenceFilter, setConfidenceFilter] = useState("All Confidence Levels");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [valueFilter, setValueFilter] = useState("All Amounts");
+  
+  const [sortBy, setSortBy] = useState<"Net Value" | "Confidence" | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const uniqueCategories = useMemo(() => ["All Categories", ...Array.from(new Set(invoices.map(i => i.category || "Uncategorized")))], [invoices]);
   const confidenceLevels = ["All Confidence Levels", "High (≥90%)", "Medium (70-89%)", "Low (<70%)"];
 
+  const handleSort = (column: "Net Value" | "Confidence") => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+  };
+
   const filteredInvoices = useMemo(() => {
-    return invoices.filter(inv => {
+    const filtered = invoices.filter(inv => {
       const cMatch = categoryFilter === "All Categories" || (inv.category || "Uncategorized") === categoryFilter;
       
       let confMatch = true;
@@ -71,9 +85,41 @@ function NonPoTable({ invoices }: Props) {
       if (confidenceFilter === "Medium (70-89%)") confMatch = confVal >= 70 && confVal < 90;
       if (confidenceFilter === "Low (<70%)") confMatch = confVal < 70;
 
-      return cMatch && confMatch;
+      let vMatchAmt = true;
+      const total = Number(inv.invoice_total || 0);
+      if (valueFilter === "< $1,000") vMatchAmt = total < 1000;
+      else if (valueFilter === "$1,000 - $5,000") vMatchAmt = total >= 1000 && total <= 5000;
+      else if (valueFilter === "> $5,000") vMatchAmt = total > 5000;
+
+      const isPending = confVal < 88 ? "Pending Review" : "Auto-Approved";
+      const renderStatus = inv.status !== "Processing" && inv.status !== "Unknown" ? inv.status : isPending;
+      const sMatch = statusFilter === "All Statuses" || String(renderStatus).toLowerCase().includes(statusFilter.toLowerCase()) || String(inv.status).toLowerCase() === statusFilter.toLowerCase();
+
+      return cMatch && confMatch && vMatchAmt && sMatch;
     });
-  }, [invoices, categoryFilter, confidenceFilter]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      let valA = 0;
+      let valB = 0;
+
+      if (sortBy === "Net Value") {
+        valA = Number(a.invoice_total || 0);
+        valB = Number(b.invoice_total || 0);
+      } else if (sortBy === "Confidence") {
+        const rawConfA = a.Confidence !== undefined ? a.Confidence : a.confidence;
+        valA = getConfidenceValue(rawConfA, 0);
+        const rawConfB = b.Confidence !== undefined ? b.Confidence : b.confidence;
+        valB = getConfidenceValue(rawConfB, 0);
+      }
+      
+      if (sortOrder === "asc") return valA - valB;
+      return valB - valA;
+    });
+
+    return sorted;
+  }, [invoices, categoryFilter, confidenceFilter, statusFilter, valueFilter, sortBy, sortOrder]);
 
   return (
     <div className="table-container animate-fade-in-up" style={{ 
@@ -102,6 +148,25 @@ function NonPoTable({ invoices }: Props) {
               {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", padding: "6px 30px 6px 12px", borderRadius: "6px", fontSize: "0.85rem", cursor: "pointer", fontWeight: 600 }}
+            >
+              <option value="All Statuses">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+            </select>
+            <select 
+              value={valueFilter}
+              onChange={(e) => setValueFilter(e.target.value)}
+              style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", padding: "6px 30px 6px 12px", borderRadius: "6px", fontSize: "0.85rem", cursor: "pointer", fontWeight: 600 }}
+            >
+              <option value="All Amounts">All Amounts</option>
+              <option value="< $1,000">&lt; $1,000</option>
+              <option value="$1,000 - $5,000">$1,000 - $5,000</option>
+              <option value="> $5,000">&gt; $5,000</option>
+            </select>
+            <select 
               value={confidenceFilter}
               onChange={(e) => setConfidenceFilter(e.target.value)}
               style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)", padding: "6px 30px 6px 12px", borderRadius: "6px", fontSize: "0.85rem", cursor: "pointer", fontWeight: 600 }}
@@ -115,25 +180,33 @@ function NonPoTable({ invoices }: Props) {
         </div>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", maxHeight: "600px", overflowY: "auto" }}>
         <table className="data-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
-          <thead>
-            <tr style={{ background: "var(--bg-surface-elevated)", borderBottom: "1px solid var(--border-subtle)" }}>
+          <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "var(--bg-surface-elevated)" }}>
+            <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
               <th style={{ textAlign: "left", padding: "14px 24px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>ID</th>
-              <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Creation Date</th>
+              <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Emission Date</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Due</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Vendor</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Category</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>GL Account</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>GL Description</th>
               <th style={{ textAlign: "left", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</th>
-              <th style={{ textAlign: "right", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Net Value</th>
-              <th style={{ textAlign: "right", padding: "14px 24px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Confidence</th>
+              <th 
+                onClick={() => handleSort("Net Value")}
+                style={{ textAlign: "right", padding: "14px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" }}>
+                Net Value {sortBy === "Net Value" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th 
+                onClick={() => handleSort("Confidence")}
+                style={{ textAlign: "right", padding: "14px 24px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" }}>
+                Confidence {sortBy === "Confidence" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredInvoices.slice(0, 15).map((inv, i) => {
+            {filteredInvoices.map((inv, i) => {
               // Mock Fallbacks for missing Supabase fields according to Design 
               // Using index 'i' to vary data deterministically if missing
               const mockCreationDate = inv.invoice_date || `2024-08-${String(10 + (i%20)).padStart(2, '0')}`;

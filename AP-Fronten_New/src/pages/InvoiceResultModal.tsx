@@ -190,11 +190,12 @@ function PendingApprovalView({ data }: { data: WebhookPendingApproval }) {
                 <div className="approval-tracker">
                     {(['level_1', 'level_2', 'level_3'] as const).map((key, i) => {
                         const val = data.approval[key];
+                        const labels = ['Manager', 'Director', 'CEO'];
                         return (
                             <div key={key} className={`approval-step ${val}`}>
                                 <div className="approval-step-icon">{approvalIcon(val)}</div>
                                 <div className="approval-step-info">
-                                    <span className="approval-step-title">Level {i + 1}</span>
+                                    <span className="approval-step-title">{labels[i]}</span>
                                     <span className={`approval-step-status status-${val}`}>{approvalLabel(val)}</span>
                                 </div>
                                 {i < 2 && <div className={`approval-connector ${val === 'approved' ? 'active' : ''}`} />}

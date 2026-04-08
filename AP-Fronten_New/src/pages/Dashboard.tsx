@@ -168,11 +168,11 @@ function Dashboard() {
     function calculateKPIs(inv: any[]) {
         const total = inv.length;
         const clean = inv.filter(
-            (i) => i.status === "Approved" || i.status === "Clean" || i.status === "ready_for_approval"
+            (i) => ["approved", "clean", "ready_for_approval"].includes(String(i.status).toLowerCase())
         ).length;
 
         const parked = inv.filter(
-            (i) => i.status === "Parked" || i.status === "Exception"
+            (i) => ["parked", "exception", "pending", "processing", "needs_review"].includes(String(i.status).toLowerCase())
         );
 
         const parkedVal = parked.reduce(
@@ -181,7 +181,7 @@ function Dashboard() {
         );
 
         const cleared = inv
-            .filter((i) => i.status === "Approved")
+            .filter((i) => String(i.status).toLowerCase() === "approved")
             .reduce((sum, i) => sum + Number(i.invoice_total || 0), 0);
 
         setStraightThroughRate(
@@ -210,7 +210,7 @@ function Dashboard() {
                 <h2>Welcome back, Admin 👋</h2>
                 <p>
                     Here's what's happening with your invoices today. You have{" "}
-                    <strong>{invoices.length} invoices</strong> awaiting review.
+                    <strong>{invoices.filter((i) => ["parked", "exception", "pending", "processing", "needs_review"].includes(String(i.status).toLowerCase())).length} invoices</strong> awaiting review.
                 </p>
             </div>
 
