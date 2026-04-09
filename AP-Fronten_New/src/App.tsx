@@ -4,14 +4,13 @@ import Sidebar from "./layout/Sidebar";
 import Topbar from "./layout/Topbar";
 import Dashboard from "./pages/Dashboard";
 import UploadInvoice from "./pages/UploadInvoice";
-import UploadContract from "./pages/UploadContract";
 import { ThemeProvider } from "./lib/ThemeContext";
 
 /* Maps route paths to page titles */
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
   "/upload": "Upload Invoice",
-  "/upload-contract": "Upload Contract",
+  // "/upload-contract": "Upload Contract",
 };
 
 function AppContent() {
@@ -40,7 +39,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/upload" element={<UploadInvoice />} />
-            <Route path="/upload-contract" element={<UploadContract />} />
+            {/* <Route path="/upload-contract" element={<UploadContract />} /> */}
           </Routes>
         </main>
       </div>

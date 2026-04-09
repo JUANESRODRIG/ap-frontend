@@ -797,6 +797,10 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   color: var(--accent-red);
 }
 
+.kpi-box-trend.good {
+  color: #10b981;
+}
+
 .kpi-box-trend-label {
   color: var(--text-secondary);
   font-weight: 400;

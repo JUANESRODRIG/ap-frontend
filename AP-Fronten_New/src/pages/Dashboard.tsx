@@ -269,6 +269,7 @@ function Dashboard() {
                     icon={<AlertCircle color="var(--accent-red)" size={24} />}
                     trend="8.1%"
                     trendUp={false}
+                    isGood={true}
                 />
 
             </div>
