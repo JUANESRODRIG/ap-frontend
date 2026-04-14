@@ -1,6 +1,7 @@
 {
-  "buildCommand": "cd AP-Fronten_New && npm install && npm run build",
-  "outputDirectory": "AP-Fronten_New/dist",
+  "buildCommand": "tsc -b && vite build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
