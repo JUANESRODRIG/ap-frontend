@@ -37,63 +37,6 @@ function Dashboard() {
         }));
     }
 
-    async function fetchExceptions() {
-        const { data, error } = await apiFetchExceptions();
-
-        if (error) {
-            console.error(error);
-            return;
-        }
-
-        const ex = data || [];
-
-        setExceptions(ex);
-        setRootCauseData(generateRootCauseData(ex));
-    }
-
-    async function fetchVendorPerformance() {
-        const { data: vendorData } = await apiFetchVendors();
-        const { data: exceptionData } = await apiFetchExceptions();
-        const { data: invoiceData } = await apiFetchInvoices();
-
-        if (!vendorData) return;
-
-        const results = vendorData.map((vendor: any) => {
-            const vendorInvoices = invoiceData?.filter(
-                (i) => i.vendor_id === vendor.vendor_id
-            ) || [];
-
-            const vendorExceptions = exceptionData?.filter((e) =>
-                vendorInvoices.some((inv) => inv.invoice_id === e.invoice_id)
-            ) || [];
-
-            const issueValue = vendorExceptions.reduce((sum, e) => {
-                const inv = vendorInvoices.find(
-                    (i) => i.invoice_id === e.invoice_id
-                );
-                return sum + (inv?.invoice_total || 0);
-            }, 0);
-
-            return {
-                vendor_id: vendor.vendor_id,
-                vendor_name: vendor.vendor_name,
-                issues: vendorExceptions.length,
-                issue_value: issueValue,
-                price_variance: vendorExceptions.filter(
-                    (e) => e.exception_type === "Price Variance"
-                ).length,
-                missing_gr: vendorExceptions.filter(
-                    (e) => e.exception_type === "Missing GR"
-                ).length,
-                po_mismatch: vendorExceptions.filter(
-                    (e) => e.exception_type === "PO Mismatch"
-                ).length
-            };
-        });
-
-        setVendors(results);
-    }
-
     function calculateKPIs(inv: any[]) {
         const total = inv.length;
         const clean = inv.filter(
@@ -216,6 +159,11 @@ function Dashboard() {
     const resolvedIssues = exceptions.filter(
         (e) => e.resolved === "true"
     ).length;
+
+    const exceptionRate =
+        invoices.length > 0
+            ? Math.round((exceptions.length / invoices.length) * 100)
+            : 0;
 
     return (
         <div className="animate-fade-in-up">
