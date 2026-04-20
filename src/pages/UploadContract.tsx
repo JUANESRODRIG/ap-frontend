@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { fetchCompanies } from "../lib/api";
 import { CloudUpload, AlertCircle, Loader, Upload } from "lucide-react";
 import "./UploadInvoice.css";
 import ContractResultModal from "./ContractResultModal";
@@ -20,16 +20,15 @@ export default function UploadContract() {
 
     useEffect(() => {
         const fetchDefaultCompany = async () => {
-            const { data, error } = await supabase
-                .from("companies")
-                .select("company_code, company_name, Description, Area")
-                .eq('company_code', 'LATAM')
-                .maybeSingle();
+            const { data, error } = await fetchCompanies();
 
             if (error) {
-                console.error("Error fetching company:", error);
+                console.error("Error fetching companies:", error);
             } else if (data) {
-                setSelectedCompany(data);
+                const company = data.find(c => c.company_code === 'LATAM');
+                if (company) {
+                    setSelectedCompany(company);
+                }
             }
         };
 

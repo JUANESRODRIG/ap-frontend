@@ -6,7 +6,7 @@ import RootCauseChart from "../components/charts/RootCauseChart";
 import OrdersTable from "../components/tables/OrdersTable";
 import VendorPerformanceTable from "../components/tables/VendorPerformanceTable";
 import NonPoDashboard from "./NonPoDashboard";
-import { supabase } from "../lib/supabase";
+import { fetchInvoices as apiFetchInvoices, fetchExceptions as apiFetchExceptions, fetchVendors as apiFetchVendors } from "../lib/api";
 import { FileText, CheckCircle, DollarSign, AlertCircle } from "lucide-react";
 
 function Dashboard() {
@@ -37,54 +37,8 @@ function Dashboard() {
         }));
     }
 
-    useEffect(() => {
-        fetchInvoices();
-        fetchExceptions();
-        fetchVendorPerformance();
-
-        // Subscribe to real-time updates from Supabase
-        const subscription = supabase
-            .channel('invoices-realtime')
-            .on('postgres_changes', { 
-                event: '*', 
-                schema: 'public', 
-                table: 'invoices' 
-            }, (payload) => {
-                console.log('Real-time update received:', payload);
-                
-                if (payload.eventType === 'INSERT') {
-                    setInvoices(prev => {
-                        const next = [...prev, payload.new];
-                        calculateKPIs(next);
-                        return next;
-                    });
-                } else if (payload.eventType === 'UPDATE') {
-                    setInvoices(prev => {
-                        const next = prev.map(inv => 
-                            inv.invoice_id === payload.new.invoice_id ? payload.new : inv
-                        );
-                        calculateKPIs(next);
-                        return next;
-                    });
-                } else if (payload.eventType === 'DELETE') {
-                    setInvoices(prev => {
-                        const next = prev.filter(inv => inv.invoice_id !== (payload.old as any).invoice_id);
-                        calculateKPIs(next);
-                        return next;
-                    });
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(subscription);
-        };
-    }, []);
-
     async function fetchExceptions() {
-        const { data, error } = await supabase
-            .from("exceptions")
-            .select("*");
+        const { data, error } = await apiFetchExceptions();
 
         if (error) {
             console.error(error);
@@ -98,17 +52,95 @@ function Dashboard() {
     }
 
     async function fetchVendorPerformance() {
-        const { data: vendorData } = await supabase
-            .from("vendors")
-            .select("*");
+        const { data: vendorData } = await apiFetchVendors();
+        const { data: exceptionData } = await apiFetchExceptions();
+        const { data: invoiceData } = await apiFetchInvoices();
 
-        const { data: exceptionData } = await supabase
-            .from("exceptions")
-            .select("*");
+        if (!vendorData) return;
 
-        const { data: invoiceData } = await supabase
-            .from("invoices")
-            .select("*");
+        const results = vendorData.map((vendor: any) => {
+            const vendorInvoices = invoiceData?.filter(
+                (i) => i.vendor_id === vendor.vendor_id
+            ) || [];
+
+            const vendorExceptions = exceptionData?.filter((e) =>
+                vendorInvoices.some((inv) => inv.invoice_id === e.invoice_id)
+            ) || [];
+
+            const issueValue = vendorExceptions.reduce((sum, e) => {
+                const inv = vendorInvoices.find(
+                    (i) => i.invoice_id === e.invoice_id
+                );
+                return sum + (inv?.invoice_total || 0);
+            }, 0);
+
+            return {
+                vendor_id: vendor.vendor_id,
+                vendor_name: vendor.vendor_name,
+                issues: vendorExceptions.length,
+                issue_value: issueValue,
+                price_variance: vendorExceptions.filter(
+                    (e) => e.exception_type === "Price Variance"
+                ).length,
+                missing_gr: vendorExceptions.filter(
+                    (e) => e.exception_type === "Missing GR"
+                ).length,
+                po_mismatch: vendorExceptions.filter(
+                    (e) => e.exception_type === "PO Mismatch"
+                ).length
+            };
+        });
+
+        setVendors(results);
+    }
+
+    function calculateKPIs(inv: any[]) {
+        const total = inv.length;
+        const clean = inv.filter(
+            (i) => ["approved", "clean", "ready_for_approval"].includes(String(i.status).toLowerCase())
+        ).length;
+
+        const parked = inv.filter(
+            (i) => ["parked", "exception", "pending", "processing", "needs_review"].includes(String(i.status).toLowerCase())
+        );
+
+        const parkedVal = parked.reduce(
+            (sum, i) => sum + Number(i.invoice_total || 0),
+            0
+        );
+
+        const cleared = inv
+            .filter((i) => String(i.status).toLowerCase() === "approved")
+            .reduce((sum, i) => sum + Number(i.invoice_total || 0), 0);
+
+        setStraightThroughRate(
+            total ? Math.round((clean / total) * 100) : 0
+        );
+
+        setParkedValue(parkedVal);
+        setClearedValue(cleared);
+
+
+    }
+
+    async function fetchExceptions() {
+        const { data, error } = await apiFetchExceptions();
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        const ex = data || [];
+
+        setExceptions(ex);
+        setRootCauseData(generateRootCauseData(ex));
+    }
+
+    async function fetchVendorPerformance() {
+        const { data: vendorData } = await apiFetchVendors();
+        const { data: exceptionData } = await apiFetchExceptions();
+        const { data: invoiceData } = await apiFetchInvoices();
 
         if (!vendorData) return;
 
@@ -149,9 +181,7 @@ function Dashboard() {
     }
 
     async function fetchInvoices() {
-        const { data, error } = await supabase
-            .from("invoices")
-            .select("*");
+        const { data, error } = await apiFetchInvoices();
 
         if (error) {
             console.error(error);
@@ -165,39 +195,23 @@ function Dashboard() {
         setLoading(false);
     }
 
-    function calculateKPIs(inv: any[]) {
-        const total = inv.length;
-        const clean = inv.filter(
-            (i) => ["approved", "clean", "ready_for_approval"].includes(String(i.status).toLowerCase())
-        ).length;
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchInvoices();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchExceptions();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchVendorPerformance();
 
-        const parked = inv.filter(
-            (i) => ["parked", "exception", "pending", "processing", "needs_review"].includes(String(i.status).toLowerCase())
-        );
+        // Polling for updates every 5 seconds
+        const interval = setInterval(() => {
+            fetchInvoices();
+        }, 5000);
 
-        const parkedVal = parked.reduce(
-            (sum, i) => sum + Number(i.invoice_total || 0),
-            0
-        );
-
-        const cleared = inv
-            .filter((i) => String(i.status).toLowerCase() === "approved")
-            .reduce((sum, i) => sum + Number(i.invoice_total || 0), 0);
-
-        setStraightThroughRate(
-            total ? Math.round((clean / total) * 100) : 0
-        );
-
-        setParkedValue(parkedVal);
-        setClearedValue(cleared);
-
-
-    }
-
-    const exceptionRate =
-        invoices.length > 0
-            ? Math.round((exceptions.length / invoices.length) * 100)
-            : 0;
+        return () => {
+            clearInterval(interval);
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const resolvedIssues = exceptions.filter(
         (e) => e.resolved === "true"
